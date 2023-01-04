@@ -714,157 +714,6 @@ def strand_num_in_graph(strands, deG):
     return a
 
 
-
-###-----------------------------------------------
-###Some Old Functions, maybe removed later--------------------------
-#An old function 20200829
-
-
-def recover_num(droplets, error_type="sub", error_rate=0.01, seq_num=10, seq_rand=False, kmer_length=21):
-
-    droplet_all_copy = copy.deepcopy(droplets)
-    data_block_length = len(droplets[0].data)
-    dna_handler = DNAHandler()
-
-    primerF = 'CCTGCAGAGTAGCATGTC'  # 5'-->3'
-    primerE = 'CTGACACTGATGCATCCG'  # complement seq of P2
-
-    if seq_rand:
-        min_DNA_copies = 0
-        max_DNA_copies = seq_num * 2
-    else:
-        min_DNA_copies = seq_num
-        max_DNA_copies = seq_num
-
-    deG = DeBruijnGraph()
-    deG.kmer_len = kmer_length
-
-    all_DNAs = []
-    droplet_IDs = []
-    droplet_ID_DNA = {}
-    maxID = 1
-    print("Copying DNAs with Errors...")
-    for dps in droplet_all_copy:
-        deG.add_seqs(
-            dna_handler.copyDNAsWithSubErr([primerF + dps.to_DNA_CRC() + primerE], min_DNA_copies, max_DNA_copies,
-                                           error_rate))
-        # deG.addSeq(primerF + dps.to_DNA_CRC() + primerE)
-        droplet_ID_DNA[dps.head_index] = dps.to_DNA_CRC()
-        all_DNAs.append(dps.to_DNA_CRC())
-        droplet_IDs.append(dps.head_index)
-        if (dps.head_index > maxID):
-            maxID = dps.head_index
-        # deG.addSeq(dps.to_DNA_CRC())
-
-    print("Recovering paths...")
-    # i = min_index
-    find_path_num = 0
-    fail_path_num = 0
-    find_multi_path_num = 0
-    multi_path_IDs = []
-
-    fail_droplet_IDs = []
-    for id in droplet_IDs:
-        deG.find_droplet_DNA(id, data_block_length)
-        if (len(deG.crc_paths) > 0):
-            if (len(deG.crc_paths) > 1):
-                find_multi_path_num = find_multi_path_num + 1
-                multi_path_IDs.append(id)
-            else:
-                if (deG.crc_paths[0] == droplet_ID_DNA[id]):
-                    find_path_num = find_path_num + 1
-                else:
-                    fail_path_num = fail_path_num + 1
-                    fail_droplet_IDs.append(id)
-        else:
-            fail_path_num = fail_path_num + 1
-            fail_droplet_IDs.append(id)
-
-    return find_path_num
-
-
-def test_deGraphsize(data_bytes, fountain_seed, min_DNA_copies, max_DNA_copies, err_rates, number_of_droplets=10000, fountain_init_index=1, data_block_length=30, kmer_length=21):
-    # test DeGraphSize
-    primerF = 'CCTGCAGAGTAGCATGTC'  # 5'-->3'
-    primerE = 'CTGACACTGATGCATCCG'  # complement seq of P2
-
-    fdna1 = DNAFountain(data_bytes, data_block_length, fountain_init_index, fountain_seed)
-    print("Generating droplets!")
-    droplet_all = get_droplets_CheckKmer(number_of_droplets, fdna1)
-    all_DNAs = []
-    for dps in droplet_all:
-        all_DNAs.append(primerF + dps.to_DNA_CRC() + primerE)
-
-    deG = DeBruijnGraph()
-    deG.kmer_len = kmer_length
-    deG.add_seqs(all_DNAs)
-
-    deGE = DeBruijnGraph()
-
-    results = {}
-    print("Testing SubErrors....")
-    results['sub'] = {}
-    results['ins'] = {}
-    results['del'] = {}
-
-    dna_handler = DNAHandler()
-    for err in err_rates:
-        deGE = DeBruijnGraph()
-        deGE.kmer_len = kmer_length
-        deGE.add_seqs(dna_handler.copy_randnum_with_sub(all_DNAs, min_DNA_copies, max_DNA_copies, err))
-
-        results['sub'][str(err)] = {}
-        results['sub'][str(err)]['Ori'] = len(deG.kmers)
-        results['sub'][str(err)]['Err'] = len(deGE.kmers)
-        # results['sub'][str(err)]['Veri'] = len(deGE.kmerList)
-
-
-def kmer_num(seqs, kmer_length=21):
-    deG = DeBruijnGraph()
-    deG.kmer_len = kmer_length
-    deG.add_seqs(seqs)
-    return len(deG.kmers)
-
-def kdkn(seq_seqs, ori_seqs, kmer_length=21):
-    deGori = DeBruijnGraph()
-    deGori.kmer_len = kmer_length
-    deGori.add_seqs(ori_seqs)
-
-    deGseq = DeBruijnGraph()
-    deGseq.kmer_len = kmer_length
-    deGseq.add_seqs(seq_seqs)
-
-    corr_kmers = 0
-    for km in deGori.kmers:
-        if km in deGseq.kmers:
-            corr_kmers = corr_kmers + 1
-
-    kd = (len(deGori.kmers) - corr_kmers) / len(deGori.kmers)
-    kn = (len(deGseq.kmers) - corr_kmers) / corr_kmers
-
-    sr = 0
-    for seq in ori_seqs:
-        kmers = kmers_of_str(seq, kmer_length)
-        if kmers_in_dict(kmers, deGseq.kmers):
-            sr += 1
-
-    return [kn, kd, sr]
-
-def knkd_analysis(rs, cut_off=0):
-
-    for cov in [1, 2, 4,  6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 64, 128, 256]:
-        print(str(cov) + '\t', end='')
-        for item in ['kd', 'kn', 'found']:
-            # print(item + '\t')
-            aa = item_std_dec(rs, cov, item, cut_off)
-            print(str(aa[0]) + '\t', end='')
-            print(str(aa[1]) + '\t', end='')
-            print(str(aa[2]) + '\t', end='')
-
-        print('\n')
-
-
-
 def item_values(rs, cov, it, cut_off=0):
     vals = []
     for a in rs:
@@ -884,68 +733,6 @@ def item_std_dec(rs, cov, it, cut_off=0):
         cut.append(best_cut)
 
     return [np.mean(vals), np.std(vals,ddof=1), np.mean(cut)]
-
-#2020-12-09
-def kmer_dis_simulation(f_seed, data, number_of_droplets = 10000,exp_seq_num=50,  err_rate = 0.04, kmer_length=21):
-    # file1 = open('2.pdf', 'rb')
-    fountain_seed = f_seed
-    run_name = 'seed' + str(fountain_seed) + '_'
-    fountain_init_index = 1
-
-    fdna1 = DNAFountain(data, 30, 1, fountain_seed)
-    dna_handler = DNAHandler()
-    degree_table = get_degrees(fdna1.num_of_chunks, int(fdna1.num_of_chunks * 5), fountain_seed)
-
-    print("Generating droplets!")
-    # dropout_rate = dropout_rate(number_of_droplets,fdna1)
-    droplet_all = get_droplets_check_repeat_kmer(number_of_droplets, fdna1)
-
-    deG = DeBruijnGraph()
-    deG.kmer_len = kmer_length
-
-    all_DNAs = []
-    droplet_IDs = []
-    droplet_ID_DNA = {}
-    maxID = 1
-    print("Degradating DNAs...")
-    for dps in droplet_all:
-        droplet_ID_DNA[dps.head_index] = dps.to_DNA_CRC()
-        all_DNAs.append(dps.to_DNA_CRC())
-        droplet_IDs.append(dps.head_index)
-        if (dps.head_index > maxID):
-            maxID = dps.head_index
-        # deG.addSeq(dps.to_DNA_CRC())
-
-    deG.add_seqs(all_DNAs)
-
-    dna_hd = DNAHandler()
-    droplet_DNAs = all_DNAs
-
-    deGori = DeBruijnGraph()
-    deGori.kmer_len = kmer_length
-    deGori.kmers = deG.kmers
-
-    print('Generating 50 copies error-rich seqs')
-    eDNAs = dna_hd.copy_seq_poisson(droplet_DNAs, exp_seq_num)
-    eDNAs = dna_hd.add_rand_sub_new(eDNAs, err_rate / 2)
-    eDNAs = dna_hd.add_rand_ins_new(eDNAs, err_rate / 4)
-    eDNAs = dna_hd.add_rand_del_new(eDNAs, err_rate / 4)
-
-    deGE = DeBruijnGraph()
-    deGE.kmer_len = kmer_length
-
-    print('Adding 10 copies error-rich seqs to deG')
-    deGE.add_seqs(eDNAs)
-
-    for a in deGori.kmers:
-        if a in deGE.kmers:
-            deGori.kmers[a] = deGE.kmers[a]
-        else:
-            deGori.kmers[a] = 0
-    res = []
-    res.append(sta_value_hash(deGE.kmers, run_name + '.10', 1))
-    res.append(sta_value_hash(deGori.kmers, run_name + '.10.ori', 1))
-    return res
 
 
 def majority_merge(reads, weight = 0.4):
@@ -1072,30 +859,6 @@ def crc_strands(strands_recovered_multi, passwd):
 
 
 
-def compare_sim_sim_multi(sim, sim_mul):
-    sim_seqs = read_sim(sim)
-    # print('hiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-    sim_mul_seqs = read_sim_multi(sim_mul)
-    # print('hiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-
-    i = compare_sim_sim_mul_seqs(sim_seqs, sim_mul_seqs)
-    return i
-
-
-def compare_sim_sim_mul_seqs(sim1, sim2):
-    i = 0
-    for aid in sim1:
-        if aid in sim2:
-            j = 0
-            # print(aid)
-            for seq in sim2[aid]:
-                if seq in sim1[aid]:
-                    j = j + 1
-            if j > 0:
-                # print(aid)
-                i = i + 1
-    return i
-
 def check_strand_des_crc(des_pass, dnastr, index_len=16, data_len=128, crc_len=8):
     # print(dnastr)
     # print(dnastr[0:indexa_dna_length + data_dna_length - crc_dna_length])
@@ -1120,11 +883,6 @@ def check_strand_des_crc(des_pass, dnastr, index_len=16, data_len=128, crc_len=8
     else:
         return False
 
-
-
-def cut_num(cov, p1=0.1, p2=2.5):
-    cut = cov * p1 / p2 ** (math.log10(cov) - 1)
-    return int(cut)
 
 def hash_keys_values(hs):
     for a in hs:
