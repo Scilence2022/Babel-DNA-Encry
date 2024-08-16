@@ -30,10 +30,10 @@ passwd = 0
 opts,args = getopt.getopt(sys.argv[1:],'-h-i:-o:-p:-d:-n:',
                           ['help','input=','output=',  'pass=', 'chunk_size=', 'chunk_num=', 'seed=',  'index_bytes=', 'ec_bytes='])
 
-usage = 'Usage:\n' + r'      python decode.py -i input_file -o outfile [Options]'
+usage = 'Usage:\n' + r'      python decode-DBGPS.py -i input_file -o outfile [Options]'
 options = 'Options:\n'
 options = options + r'      -h, --help                              Show help information' + '\n'
-options = options + r'      -i, --input   <input file>              The decoded strands by DBGPS' + '\n'
+options = options + r'      -i, --input   <input file>              The decoded strands by DBGPS-greedy-path' + '\n'
 options = options + r'      -o, --output  <output file>             Output file' + '\n'
 options = options + r'      -p, --pass  password                    Password' + '\n'
 
