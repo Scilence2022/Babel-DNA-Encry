@@ -16,8 +16,8 @@ kmer_length = 17
 min_clu_seq_num = 20
 
 input_file = ""
-data_seq_file = r'data-seq.fa'
-index_seq_file = r'index-data-seqs.fa'
+data_seq_file = r'input_files/data-seq.fa'
+index_seq_file = r'input_files/index-data-seqs.fa'
 # fq_seq_file = work_dir + r'/passD.fastq'
 
 
@@ -85,7 +85,7 @@ seq_ft = SeqFountain()
 
 print("Reading gzFQ files ..", end="")
 seq_ft.read_FQ(input_file)
-print("")
+
 
 
 z_dna_bits = decode_key(kms_arr, seq_ft, deGD,min_clu_seq_num, kmer_length)
@@ -93,5 +93,4 @@ print("Deciphered Z-DNA Key Bits: ", end="")
 print_zdna_bits(z_dna_bits)
 print("\nDeciphered Z-DNA Key value: ", end="")
 print(zdna_key_value(z_dna_bits))
-
 
