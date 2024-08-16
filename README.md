@@ -43,7 +43,7 @@ pip install numpy pydes getopts
 
 #Run the scripts:
 python Encode_Babels.py
-python python decipher-Z-DNA.py 
+python decipher-Z-DNA.py 
 ...
 
 ```
