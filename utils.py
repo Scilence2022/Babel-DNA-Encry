@@ -76,16 +76,16 @@ def robust_distribution(K, c_value = 0.5, robust_failure_probability=0.1):
 	# print(robust_failure_probability)
 
 	S = c_value * math.log(K / robust_failure_probability) * math.sqrt(K)
-	print(S)
+	#print(S)
 	# M = round(K/S)
 	M = round(K / S)
-	print(M)
+	#print(M)
 	extra_proba = [0] + [1/(i * M) for i in range(1, M-1)]
 	extra_proba += [S * math.log(S / robust_failure_probability) / K]  # Spike at M
 	extra_proba += [0 for k in range(M, K)]
 
 	probabilities = np.add(extra_proba, ideal_distribution(K))
-	print(np.sum(probabilities))
+	#print(np.sum(probabilities))
 	probabilities /= np.sum(probabilities)
 	#probabilities_sum = np.sum(probabilities)
 	#assert probabilities_sum >= 1 - epsilonc and probabilities_sum <= 1 + epsilonc, "The robust distribution should be standardized"
