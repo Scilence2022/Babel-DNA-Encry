@@ -20,7 +20,7 @@ This package requires only a standard computer with enough RAM to support the in
 ### OS Requirements
 This package is supported for *Windows*, *macOS* and *Linux*. 
 However, it has only been tested on the following system:
-+ Ubuntu 20.04.6 LTS
++ Ubuntu 20.04.6 LTS Python 3.11.7
 
 ### Python Dependencies
 
