@@ -11,10 +11,12 @@ import os
 
 
 data_block_length = 30
-test_num = 20
+test_num = 10
 fountain_seed = 2
 
 work_dir = r'./input_files'  + '/'
+
+print('\nReading input files')
 
 # fileA = open(work_dir + r'Babel-A.jpg', 'rb')
 file_tju = open(work_dir + r'tju.jpg', 'rb')
@@ -43,18 +45,6 @@ ft_default.fix_bytes()
 ft_default.des = True
 ft_default.sec_key = pass_default
 
-# for iiii in range(1, 6000):
-#     a = ft_a.DNAdroplet()
-#     dd = a.data
-#     a.encry_data()
-#     a.decry_data()
-#     if a.data != dd:
-#         print(a.head_index)
-#
-# a.encry_data()
-# a_dna = a.to_DNA_CRC_sIndex()
-# len(a_dna)
-
 
 ft_a = DNAFountain(filebytesA, data_block_length, fountain_init_index, fountain_seed, 16, 16, 8)
 ft_a.des = True
@@ -68,6 +58,8 @@ ft_c = DNAFountain(filebytesC, data_block_length, fountain_init_index, fountain_
 ft_c.des = True
 ft_c.sec_key = pass_c.to_bytes(8, byteorder ='big')
 
+
+print('\nGenerating DNA data droplets and run strand dropout test ......')
 failed_gts = []
 
 total_size = 3000 #int(fdna1.num_of_chunks * 1.15)
@@ -77,6 +69,24 @@ droplet_four_pics = []
 
 droplet_all = get_droplets(total_size, ft_default)
 droplet_four_pics.append(droplet_all)
+suc_num_default = 0
+for i in range(0, test_num):
+
+    droplet_sample = []
+    # droplet_sample[i] = random.sample(range(0, total_size), core_size)
+    random.seed(i + 1)
+    for j in random.sample(range(0, total_size), core_size):
+        droplet_sample.append(copy.deepcopy(droplet_all[j]))
+
+    if test_droplets(droplet_sample, ft_default):
+        suc_num_default = suc_num_default + 1
+
+print("With a dropout rate of 4%, " + str(suc_num_default) + " succeed in a total of " + str(test_num) + " runs.")
+print('\nGenerating DNA data droplets and run strand dropout test ......')
+
+droplet_all = get_droplets(total_size, ft_a)
+droplet_four_pics.append(droplet_all)
+
 suc_num_a = 0
 for i in range(0, test_num):
 
@@ -86,11 +96,13 @@ for i in range(0, test_num):
     for j in random.sample(range(0, total_size), core_size):
         droplet_sample.append(copy.deepcopy(droplet_all[j]))
 
-    # if test_droplets(droplet_sample, ft_a):
-    #     suc_num_a = suc_num_a + 1
+    if test_droplets(droplet_sample, ft_a):
+        suc_num_a = suc_num_a + 1
 
+print("With a dropout rate of 4%, " + str(suc_num_a) + " succeed in a total of " + str(test_num) + " runs.")
+print('\nGenerating DNA data droplets and run strand dropout test ......')
 
-droplet_all = get_droplets(total_size, ft_a)
+droplet_all = get_droplets(total_size, ft_b)
 droplet_four_pics.append(droplet_all)
 suc_num_b = 0
 for i in range(0, test_num):
@@ -101,10 +113,13 @@ for i in range(0, test_num):
     for j in random.sample(range(0, total_size), core_size):
         droplet_sample.append(copy.deepcopy(droplet_all[j]))
 
-    # if test_droplets(droplet_sample, ft_b):
-    #     suc_num_b = suc_num_b + 1
+    if test_droplets(droplet_sample, ft_b):
+        suc_num_b = suc_num_b + 1
 
-droplet_all = get_droplets(total_size, ft_b)
+print("With a dropout rate of 4%, " + str(suc_num_b) + " succeed in a total of " + str(test_num) + " runs.")
+print('\nGenerating DNA data droplets and run strand dropout test ......')
+
+droplet_all = get_droplets(total_size, ft_c)
 droplet_four_pics.append(droplet_all)
 suc_num_c = 0
 for i in range(0, test_num):
@@ -115,23 +130,13 @@ for i in range(0, test_num):
     for j in random.sample(range(0, total_size), core_size):
         droplet_sample.append(copy.deepcopy(droplet_all[j]))
 
-    # if test_droplets(droplet_sample, ft_c):
-    #     suc_num_c = suc_num_c + 1
+    if test_droplets(droplet_sample, ft_c):
+        suc_num_c = suc_num_c + 1
 
-droplet_all = get_droplets(total_size, ft_c)
-droplet_four_pics.append(droplet_all)
-suc_num_d = 0
-for i in range(0, test_num):
+print("With a dropout rate of 4%, " + str(suc_num_c) + " succeed in a total of " + str(test_num) + " runs.")
 
-    droplet_sample = []
-    # droplet_sample[i] = random.sample(range(0, total_size), core_size)
-    random.seed(i + 1)
-    for j in random.sample(range(0, total_size), core_size):
-        droplet_sample.append(copy.deepcopy(droplet_all[j]))
 
-    # if test_droplets(droplet_sample, ft_d):
-    #     suc_num_d = suc_num_d + 1
-
+print('\nOutputting strand sequences and details ......')
 
 p1 = 'CCTGCAGAGTAGCATGTC'  # 5'-->3'
 p2 = 'CTGACACTGATGCATCCG'  # complement seq of P2
@@ -172,6 +177,8 @@ for i in range(0, 4):
     file2.close()
 
 
+
+
 os.system('mv input_files/babel_v2.DNAs.tab.sim.0 input_files/tju.jpg.strands')
 os.system('mv input_files/babel_v2.DNAs.tab.rich.0 input_files/tju.jpg.details')
 
@@ -183,7 +190,6 @@ os.system('mv input_files/babel_v2.DNAs.tab.rich.2 input_files/HECHAIN.jpg.detai
 
 os.system('mv input_files/babel_v2.DNAs.tab.sim.3 input_files/ZONFF.jpg.strands')
 os.system('mv input_files/babel_v2.DNAs.tab.rich.3 input_files/ZONFF.jpg.details')
-
 
 
 
