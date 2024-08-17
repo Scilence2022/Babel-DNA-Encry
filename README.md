@@ -86,7 +86,7 @@ python decipher-Z-DNA.py -i passD.fastq.gz
 
 
 ### 3) Decryption of Encrpted data in Strand Sequences
-Script `decode-DBGPS.py` is desinged for decipher specific information from the strand sequences assembled by `DBGPS-greedy-path`, a greedy strand assembler designed for `Babel-DNA encryption` architecture. 
+Script `decode-DBGPS.py` is desinged for decipher specific information from the strand sequences assembled by `DBGPS-greedy-path`, a greedy strand assembler designed for `Babel-DNA encryption` architecture. `DBGPS-greedy-path` is available at https://github.com/Scilence2022/DBGPS-Babel.
 
 For testing of the script, the *.strands files encoded by the `Encode_Babels.py` script can be merged and used as input file. Use the following command to merge the strand sequences and trim primers (18bp):
 ```commandline
