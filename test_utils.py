@@ -21,8 +21,7 @@ def get_droplets(num, fdna1):
     droplets = []
     gc_drop_num = 0
     adrop = None
-    print(i)
-    print(num)
+    
     while i < num:
         adrop = fdna1.DNAdroplet()
         if check_dna(adrop.to_DNA_CRC_sIndex()):
@@ -31,10 +30,9 @@ def get_droplets(num, fdna1):
             i = i + 1
         else:
             gc_drop_num = gc_drop_num + 1
-        #     print("Bad Droplet detected!")
-        #     print(i)
-    print('GC drop num:',end='\t')
-    print(gc_drop_num)
+   
+    #print('GC drop num:',end='\t')
+    #print(gc_drop_num)
     return droplets
 
 def get_droplets_check_repeat_kmer(num, fdna1, kmer_len=21):
