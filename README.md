@@ -118,7 +118,7 @@ Decoding with specific key using the `all.assembled.strands` file as input file:
 python decode-DBGPS.py -i all.assembled.strands -o default.jpg #default key 
 python decode-DBGPS.py -i all.assembled.strands -p 2923267382  -o 2923267382.jpg 
 ```
-###Caution: pass D is NOT applied in the encryption of the four images. 
+### Caution: pass D is NOT applied in the encryption of the four images. 
 
 # License
 
