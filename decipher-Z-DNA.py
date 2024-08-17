@@ -84,7 +84,7 @@ deGD.add_seq(data_seq)
 seq_ft = SeqFountain()
 
 print("Reading gzFQ files ..", end="")
-seq_ft.read_FQ(input_file)
+seq_ft.read_gzFQ(input_file)
 
 
 
