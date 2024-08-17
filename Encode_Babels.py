@@ -16,7 +16,7 @@ fountain_seed = 2
 
 work_dir = r'./input_files'  + '/'
 
-print('\nReading input files')
+print('\nReading input files ...')
 
 # fileA = open(work_dir + r'Babel-A.jpg', 'rb')
 file_tju = open(work_dir + r'tju.jpg', 'rb')
