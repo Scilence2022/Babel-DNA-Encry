@@ -35,7 +35,7 @@ getopts
 
 
 ```sh
-unzip Babel-DNA-Encry.zip
+git clone https://github.com/Scilence2022/Babel-DNA-Encry.git
 cd Babel-DNA-Encry
 
 #Install Python dependencies
