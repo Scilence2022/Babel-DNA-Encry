@@ -959,22 +959,25 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_
 
 
     # print("Clustering reads ......")
-    rand_seq_num = 100
+    rand_seq_num = 1000
     # max_clu_seq_num = 20
     min_clu_seq_num = 0
     while min_clu_seq_num < max_clu_seq_num:
+        print("min_clu_seq_num:" + str(min_clu_seq_num))
         rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
         for i in range(0, rand_seq_num):
             ard = rand_seqs[i]
             if len(ard) > 600:
-                gp_id = clu_read(kms_arr, ard, kmer_length)
+                gp_id = clu_read(kms_arr, ard, kmer_length, bit_num)
                 if clu_seqs_num[gp_id] < max_clu_seq_num:
                     clu_seqs[gp_id].append(ard)
                     clu_seqs_num[gp_id] = clu_seqs_num[gp_id] + 1
         min_n = clu_seqs_num[0]
         for j in clu_seqs_num:
+            print(j, end = '\t')
             if j < min_n:
                 min_n = j
+        print(" ")
         min_clu_seq_num = min_n #update the minimal sequence number of clusters
         # print("min_clu_seq_num")
         # print(min_clu_seq_num)
@@ -1003,6 +1006,15 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_
         #     print(c_bit_values[i], end="\n")
         #
         #     return False
+        print('Debugging for each read for bit ' + str(i+1))
+        for j in range(0, len(clu_seqs[i])):
+            deGj = DeBruijnGraph()
+            deGj.kmer_len = kmer_length
+            deGj.add_seq(clu_seqs[i][j])
+            print(compare_kmers(deGD.kmers, deGj.kmers))
+
+        print('End of debugging')
+
     return decoded_bits
 
 def zdna_key_value(zdna_bits):
