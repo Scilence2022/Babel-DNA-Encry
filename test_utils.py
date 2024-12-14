@@ -939,7 +939,7 @@ def clu_read(km_arr, aread, km_len=13, gp_num=32, min_score=0.55):
             best_sc = sc
             # print(x)
             # print(sc)
-
+    # print(best_sc, end = '\t')
     if best_sc > min_score:
 
         return best_g
@@ -954,14 +954,15 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_
         clu_seqs.append([])
         clu_seqs_num.append(0)
 
-    clu_seqs.append([])
-    clu_seqs_num.append(0)
+    # clu_seqs.append([])
+    # clu_seqs_num.append(0)
 
 
     # print("Clustering reads ......")
     rand_seq_num = 1000
     # max_clu_seq_num = 20
     min_clu_seq_num = 0
+    print("\nCollecting quanlified reads for each index, target number: " + str(min_clu_seq_num))
     while min_clu_seq_num < max_clu_seq_num:
         print("min_clu_seq_num:" + str(min_clu_seq_num))
         rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
@@ -969,9 +970,12 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_
             ard = rand_seqs[i]
             if len(ard) > 600:
                 gp_id = clu_read(kms_arr, ard, kmer_length, bit_num)
-                if clu_seqs_num[gp_id] < max_clu_seq_num:
-                    clu_seqs[gp_id].append(ard)
-                    clu_seqs_num[gp_id] = clu_seqs_num[gp_id] + 1
+
+                if gp_id >= 0:
+                    if clu_seqs_num[gp_id] < max_clu_seq_num:
+                        clu_seqs[gp_id].append(ard)
+                        clu_seqs_num[gp_id] = clu_seqs_num[gp_id] + 1
+        print(' ###########################################')
         min_n = clu_seqs_num[0]
         for j in clu_seqs_num:
             print(j, end = '\t')
