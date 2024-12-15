@@ -923,7 +923,7 @@ def compare_kmers(kms1, kms2):
     return ee/len(kms1)
 
 
-def clu_read(km_arr, aread, km_len=13, gp_num=32, min_score=0.55):
+def clu_read(km_arr, aread, km_len=15, gp_num=32, min_score=0.55):
     best_g = -1
     best_sc = 0
     aD = DeBruijnGraph()
@@ -947,7 +947,7 @@ def clu_read(km_arr, aread, km_len=13, gp_num=32, min_score=0.55):
         return -1
 
 
-def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_num = 32):
+def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 15, bit_num = 32):
     clu_seqs = []
     clu_seqs_num = []
     for i in range(0, bit_num):
@@ -1010,16 +1010,60 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 12, bit_
         #     print(c_bit_values[i], end="\n")
         #
         #     return False
-        print('Debugging for each read for bit ' + str(i+1))
-        for j in range(0, len(clu_seqs[i])):
-            deGj = DeBruijnGraph()
-            deGj.kmer_len = kmer_length
-            deGj.add_seq(clu_seqs[i][j])
-            print(compare_kmers(deGD.kmers, deGj.kmers))
-
-        print('End of debugging')
+        # print('Debugging for each read for bit ' + str(i+1))
+        # for j in range(0, len(clu_seqs[i])):
+        #     deGj = DeBruijnGraph()
+        #     deGj.kmer_len = kmer_length
+        #     deGj.add_seq(clu_seqs[i][j])
+        #     print(compare_kmers(deGD.kmers, deGj.kmers))
+        #
+        # print('End of debugging')
 
     return decoded_bits
+
+
+def maj_vot_key(key_arr):
+    """
+    Function to compute consensus bits using majority voting algorithm.
+
+    Parameters:
+    key_arr (list of bytes): An array of byte sequences, where each byte sequence is of identical length.
+
+    Returns:
+    bytes: A byte sequence representing the consensus bits derived using majority voting.
+    """
+    if not key_arr or not all(len(key) == len(key_arr[0]) for key in key_arr):
+        raise ValueError("All byte sequences must be of identical length and non-empty.")
+
+    # Determine the number of bits per byte sequence
+    byte_length = len(key_arr[0])
+
+    # Initialize a list to hold the consensus bits
+    consensus_bits = []
+
+    for i in range(byte_length):
+        # Extract the ith byte from each byte sequence
+        byte_column = [key[i] for key in key_arr]
+
+        for bit_position in range(8):
+            # Extract the bits at the current position
+            bit_column = [(byte >> (7 - bit_position)) & 1 for byte in byte_column]
+
+            # Perform majority voting on the current bit position
+            ones = sum(bit_column)
+            zeros = len(bit_column) - ones
+            consensus_bits.append(1 if ones > zeros else 0)
+
+    # Group the consensus bits back into bytes
+    consensus_bytes = bytearray()
+    for i in range(0, len(consensus_bits), 8):
+        byte = 0
+        for j in range(8):
+            byte = (byte << 1) | consensus_bits[i + j]
+        consensus_bytes.append(byte)
+
+    return bytes(consensus_bytes)
+
 
 def zdna_key_value(zdna_bits):
 
@@ -1126,5 +1170,78 @@ def read_arr(file):
         ar.append(line)
         line = f.readline()
     return ar
+
+def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit_num=32, threshold=0.1):
+    """
+    Decodes the key by analyzing each sequence's k-mers within clustered groups.
+    
+    Instead of aggregating all sequences in a cluster, this version calculates the k-mers
+    for each individual sequence and determines the bit value based on the number of
+    sequences exceeding a specified k-mer similarity threshold.
+
+    Parameters:
+        kms_arr (list): Array of k-mer sets for each bit.
+        seq_ft (SequenceFetcher): An object to fetch sequences.
+        deGD (DeBruijnGraph): De Bruijn graph containing reference k-mers.
+        max_clu_seq_num (int): Maximum number of sequences per cluster.
+        kmer_length (int): Length of k-mers to analyze.
+        bit_num (int): Number of bits to decode.
+        threshold (float): Similarity threshold to determine bit value.
+
+    Returns:
+        list: Decoded bits as a list of integers (0 or 1).
+    """
+    clu_seqs = [[] for _ in range(bit_num)]
+    clu_seqs_num = [0] * bit_num
+
+    rand_seq_num = 1000
+    min_clu_seq_num = 0
+    print("\nCollecting qualified reads for each index, target number:", min_clu_seq_num)
+
+    while min_clu_seq_num < max_clu_seq_num:
+        print("min_clu_seq_num:", min_clu_seq_num)
+        rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
+        
+        for seq in rand_seqs:
+            if len(seq) > 600:
+                gp_id = clu_read(kms_arr, seq, kmer_length, bit_num)
+                if gp_id >= 0 and clu_seqs_num[gp_id] < max_clu_seq_num:
+                    clu_seqs[gp_id].append(seq)
+                    clu_seqs_num[gp_id] += 1
+
+        print(' ###########################################')
+        min_n = clu_seqs_num[0]
+        for count in clu_seqs_num:
+            print(count, end='\t')
+            if count < min_n:
+                min_n = count
+        print(" ")
+        min_clu_seq_num = min_n  # Update the minimal sequence number of clusters
+
+    decoded_bits = []
+    for i in range(bit_num):
+        high_sim_count = 0
+        low_sim_count = 0
+        
+        for seq in clu_seqs[i]:
+            deG = DeBruijnGraph()
+            deG.kmer_len = kmer_length
+            deG.add_seq(seq)
+            seq_kmers = deG.kmers
+            reference_kmers = deGD.kmers
+            
+            # Calculate similarity as the fraction of overlapping k-mers
+            similarity = compare_kmers(seq_kmers, reference_kmers) 
+            print(similarity)
+            if similarity >= threshold:
+                high_sim_count += 1
+            else:
+                low_sim_count += 1
+        
+        # Determine bit value based on majority
+        bit_value = 0 if high_sim_count > low_sim_count else 1
+        decoded_bits.append(bit_value)
+
+    return decoded_bits
 
 
