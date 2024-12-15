@@ -1,7 +1,4 @@
 import crc16pure
-# import random
-# import fountain
-# import droplet
 import copy
 from DNAdroplet import DNADroplet
 from utils import *
@@ -13,6 +10,7 @@ import operator
 import math
 import glass
 from operator import itemgetter
+import pickle
 
 
 #20190701
@@ -1245,3 +1243,15 @@ def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit
     return decoded_bits
 
 
+
+
+
+def save_variable_to_file(variable, file_path):
+    with open(file_path, 'wb') as file:
+        pickle.dump(variable, file)
+
+
+# 
+def load_variable_from_file(file_path):
+    with open(file_path, 'rb') as file:
+        return pickle.load(file)
