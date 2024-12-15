@@ -13,8 +13,8 @@ bit_num = 32
 # index_seq_file = sys.argv[2]
 # fq_seq_file = sys.argv[3]
 kmer_length = 15
-min_clu_seq_num = 5
-dec_rep_time = 5  # Default value for decoding repetitions
+min_clu_seq_num = 11
+dec_rep_time = 11  # Default value for decoding repetitions
 dec_mode = 0  # 0: decode_key, 1: decode_key_v2
 
 input_file = "/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.d2306165.pass.barcode23.fq"
@@ -68,6 +68,10 @@ for opt_name, opt_value in opts:
         output_file = opt_value
     if opt_name == '--bit_num':
         bit_num = int(opt_value)
+    if opt_name == '--index_seqs':
+        index_seq_file = opt_value
+    if opt_name == '--data_seq':
+        data_seq_file = opt_value
     if opt_name == '--min_clu_seq_num':
         min_clu_seq_num = int(opt_value)
     if opt_name == '--dec_rep_time':

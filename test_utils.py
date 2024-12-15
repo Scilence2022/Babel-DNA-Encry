@@ -1080,7 +1080,7 @@ def print_zdna_bits(zdna_bits):
 
     bit_num = len(zdna_bits)
     for n in range(0, bit_num):
-        print(zdna_bits[n], end=" ")
+        print(zdna_bits[n], end="\t")
         # print(key_value)
 
 
@@ -1171,7 +1171,7 @@ def read_arr(file):
         line = f.readline()
     return ar
 
-def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit_num=32, threshold=0.1):
+def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit_num=32, threshold=0.4):
     """
     Decodes the key by analyzing each sequence's k-mers within clustered groups.
     
@@ -1222,7 +1222,7 @@ def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit
     for i in range(bit_num):
         high_sim_count = 0
         low_sim_count = 0
-        
+        print(' ###########################################')
         for seq in clu_seqs[i]:
             deG = DeBruijnGraph()
             deG.kmer_len = kmer_length
