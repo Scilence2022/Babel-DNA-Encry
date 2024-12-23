@@ -945,7 +945,8 @@ def clu_read(km_arr, aread, km_len=15, gp_num=32, min_score=0.55):
         return -1
 
 
-def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 15, bit_num = 32):
+
+def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=20, kmer_length = 13, bit_num = 32, clu_threshold=0.15):
     clu_seqs = []
     clu_seqs_num = []
     for i in range(0, bit_num):
@@ -967,7 +968,7 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 15, bit_
         for i in range(0, rand_seq_num):
             ard = rand_seqs[i]
             if len(ard) > 600:
-                gp_id = clu_read(kms_arr, ard, kmer_length, bit_num)
+                gp_id = clu_read(kms_arr, ard, kmer_length, bit_num, clu_threshold)
 
                 if gp_id >= 0:
                     if clu_seqs_num[gp_id] < max_clu_seq_num:
@@ -983,20 +984,120 @@ def decode_key(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length = 15, bit_
         min_clu_seq_num = min_n #update the minimal sequence number of clusters
         # print("min_clu_seq_num")
         # print(min_clu_seq_num)
+    return clu_seqs
 
 
-    # print("reading Z-DNA encryption data")
-    # bit_values = []
-    # c_bit_values = [1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0]
+def random_clu_seqs(all_clu_seqs, clu_seq_num=100):
+    """
+    Randomly selects a specified number of DNA sequences from each cluster.
+
+    Parameters:
+        all_clu_seqs (list of list of str): A list where each item is a cluster containing DNA sequences.
+        clu_seq_num (int, optional): Number of sequences to randomly select from each cluster. Defaults to 5.
+
+    Returns:
+        list of list of str: A new list of clusters with each cluster containing randomly selected DNA sequences.
+    """
+    new_clu_seqs = []
+    for idx, cluster in enumerate(all_clu_seqs):
+        if not isinstance(cluster, list):
+            raise ValueError(f"Cluster at index {idx} is not a list.")
+        if len(cluster) < clu_seq_num:
+            # If the cluster has fewer sequences than clu_seq_num, include all sequences
+            selected_seqs = cluster.copy()
+            # print(f"Cluster {idx} has fewer sequences ({len(cluster)}) than clu_seq_num ({clu_seq_num}). Selecting all available sequences.")
+        else:
+            # Randomly sample clu_seq_num sequences without replacement
+            selected_seqs = random.sample(cluster, clu_seq_num)
+            # print(f"Cluster {idx}: Selected {clu_seq_num} out of {len(cluster)} sequences.")
+        new_clu_seqs.append(selected_seqs)
+    return new_clu_seqs
+
+
+def filter_seqs(seqs, deGD, dec_clu_seq_num=5):
+    """
+    Filters DNA sequences based on their overlap ratio with reference k-mers.
+
+    Parameters:
+        seqs (list of str): Array of DNA sequences.
+        deGD (object): An object containing a list of k-mers in deGD.kmers.
+        dec_clu_seq_num (int, optional): Number of sequences to retain if filtering is needed. Defaults to 10.
+
+    Returns:
+        list of str: Filtered list of DNA sequences.
+    """
+    if len(seqs) <= dec_clu_seq_num:
+        return seqs
+
+    # Calculate overlap ratios for each sequence
+    seqs_with_overlap = []
+    for seq in seqs:
+        # Assuming a function get_kmers exists to extract k-mers from a sequence
+        kmers_of_seq = get_DNA_kmers(seq)
+        overlap_ratio = compare_kmers(deGD.kmers, kmers_of_seq)
+        seqs_with_overlap.append((seq, overlap_ratio))
+
+    # Sort sequences by their overlap ratio
+    seqs_with_overlap.sort(key=lambda x: x[1])
+
+    # Determine the starting index to select the middle dec_clu_seq_num sequences
+    total_seqs = len(seqs_with_overlap)
+    start_index = (total_seqs - dec_clu_seq_num) // 2
+
+    # Slice the sorted list to get the desired number of sequences in the middle
+    selected_seqs = [seq for seq, _ in seqs_with_overlap[start_index:start_index + dec_clu_seq_num]]
+
+    return selected_seqs
+
+def get_DNA_kmers(sequence, k=13):
+    """
+    Generates k-mers and their reverse complements from a given DNA sequence.
+
+    Parameters:
+        sequence (str): DNA sequence.
+        k (int, optional): Length of each k-mer. Defaults to 13.
+
+    Returns:
+        set of str: Set of unique k-mers and their reverse complements extracted from the sequence.
+    """
+    kmers = set()
+    for i in range(len(sequence) - k + 1):
+        kmer = sequence[i:i+k].upper()
+        rc_kmer = reverse_complement(kmer)
+        kmers.add(kmer)
+        kmers.add(rc_kmer)
+    return kmers
+
+def reverse_complement(seq):
+    """
+    Generates the reverse complement of a DNA sequence.
+
+    Parameters:
+        seq (str): DNA sequence.
+
+    Returns:
+        str: Reverse complement of the sequence.
+    """
+    complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C', 'N': 'N'}
+    return ''.join(complement.get(base, 'N') for base in reversed(seq))
+
+
+def decode_key(clu_seqs, deGD, dec_clu_seq_num=5, threshold=0.86):
+
+    kmer_length = deGD.kmer_len
+    bit_num = len(clu_seqs)
+
     decoded_bits = []
     for i in range(0, bit_num):
         # vals = []
+        # Filtering seqs in case of dec_clu_seq_num < seq number
+        filtered_seqs = filter_seqs(clu_seqs[i], deGD, dec_clu_seq_num)
 
         deG = DeBruijnGraph()
         deG.kmer_len = kmer_length
-        deG.add_seqs(clu_seqs[i])
+        deG.add_seqs(filtered_seqs)
         vals = compare_kmers(deGD.kmers, deG.kmers)
-        if vals > 0.99:
+        if vals > threshold:
             bit_value = 0
         else:
             bit_value = 1
@@ -1169,10 +1270,10 @@ def read_arr(file):
         line = f.readline()
     return ar
 
-def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit_num=32, threshold=0.4):
+def decode_key_v2(clu_seqs, deGD, threshold=0.7):
     """
     Decodes the key by analyzing each sequence's k-mers within clustered groups.
-    
+
     Instead of aggregating all sequences in a cluster, this version calculates the k-mers
     for each individual sequence and determines the bit value based on the number of
     sequences exceeding a specified k-mer similarity threshold.
@@ -1189,60 +1290,124 @@ def decode_key_v2(kms_arr, seq_ft, deGD, max_clu_seq_num=20, kmer_length=15, bit
     Returns:
         list: Decoded bits as a list of integers (0 or 1).
     """
-    clu_seqs = [[] for _ in range(bit_num)]
-    clu_seqs_num = [0] * bit_num
-
-    rand_seq_num = 1000
-    min_clu_seq_num = 0
-    print("\nCollecting qualified reads for each index, target number:", min_clu_seq_num)
-
-    while min_clu_seq_num < max_clu_seq_num:
-        print("min_clu_seq_num:", min_clu_seq_num)
-        rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
-        
-        for seq in rand_seqs:
-            if len(seq) > 600:
-                gp_id = clu_read(kms_arr, seq, kmer_length, bit_num)
-                if gp_id >= 0 and clu_seqs_num[gp_id] < max_clu_seq_num:
-                    clu_seqs[gp_id].append(seq)
-                    clu_seqs_num[gp_id] += 1
-
-        print(' ###########################################')
-        min_n = clu_seqs_num[0]
-        for count in clu_seqs_num:
-            print(count, end='\t')
-            if count < min_n:
-                min_n = count
-        print(" ")
-        min_clu_seq_num = min_n  # Update the minimal sequence number of clusters
+    kmer_length = deGD.kmer_len
+    bit_num = len(clu_seqs)
 
     decoded_bits = []
     for i in range(bit_num):
         high_sim_count = 0
         low_sim_count = 0
-        print(' ###########################################')
+        # print(' ###########################################')
         for seq in clu_seqs[i]:
             deG = DeBruijnGraph()
             deG.kmer_len = kmer_length
             deG.add_seq(seq)
             seq_kmers = deG.kmers
             reference_kmers = deGD.kmers
-            
+
             # Calculate similarity as the fraction of overlapping k-mers
-            similarity = compare_kmers(seq_kmers, reference_kmers) 
-            print(similarity)
+            similarity = compare_kmers(reference_kmers, seq_kmers)
+            # print(similarity)
             if similarity >= threshold:
                 high_sim_count += 1
             else:
                 low_sim_count += 1
-        
+
         # Determine bit value based on majority
         bit_value = 0 if high_sim_count > low_sim_count else 1
         decoded_bits.append(bit_value)
 
     return decoded_bits
 
+def maj_vot_key(key_arr):
+    """
+    Function to compute consensus bits using a majority voting algorithm.
 
+    Parameters:
+        key_arr (list of list of int): An array of bit sequences, where each bit sequence is a list of integers (0 or 1) of identical length.
+
+    Returns:
+        list of int: A list of consensus bits derived using majority voting.
+    """
+    if not key_arr:
+        raise ValueError("Input key_arr must be a non-empty list of bit sequences.")
+
+    # Determine the length of the bit sequences
+    bit_length = len(key_arr[0])
+
+    if not all(len(key) == bit_length for key in key_arr):
+        raise ValueError("All bit sequences must be of identical length.")
+
+    consensus_bits = []
+
+    for i in range(bit_length):
+        # Extract the ith bit from each bit sequence
+        bit_column = [key[i] for key in key_arr]
+
+        # Perform majority voting on the current bit position
+        ones = sum(bit_column)
+        zeros = len(bit_column) - ones
+        consensus_bit = 1 if ones > zeros else 0
+
+        consensus_bits.append(consensus_bit)
+
+    return consensus_bits
+
+
+
+
+
+def compare_majority_vote(large_array, sample_size, repetitions, correct_result):
+    """
+    Randomly selects a specific number of variables from a very large array, computes the result using `maj_vot_key`, and compares it with a known correct result.
+    This process is repeated a specific number of times, and finally returns the number of times it matches the correct result.
+
+    Parameters:
+        large_array (list): The large array to sample from.
+        sample_size (int): The number of variables to sample each time.
+        repetitions (int): The number of repetitions.
+        correct_result: The known correct result for comparison.
+
+    Returns:
+        int: The number of times it matches the correct result.
+    """
+    match_count = 0
+
+    for _ in range(repetitions):
+
+        sampled_vars = random.sample(large_array, sample_size)
+
+        result = maj_vot_key(sampled_vars)
+
+        if result == correct_result:
+            match_count += 1
+
+    return match_count
+
+
+def run_sample_size_variation(large_array, sample_sizes, repetitions, correct_result):
+    """
+    Runs `compare_majority_vote` for different sample sizes and stores the results in a dictionary.
+
+    Parameters:
+        large_array (list): The large array to sample from.
+        sample_sizes (list): A list of sample sizes to iterate over.
+        repetitions (int): The number of repetitions for each sample size.
+        correct_result: The known correct result for comparison.
+
+    Returns:
+        dict: A dictionary where each key is a sample size and the value is the number of matches.
+    """
+    results = {}
+    for size in sample_sizes:
+        if size > len(large_array):
+            print(f"Sample size {size} is larger than the array size {len(large_array)}. Skipping.")
+            continue
+        print(f"Processing sample size: {size}")
+        matches = compare_majority_vote(large_array, size, repetitions, correct_result)
+        results[size] = matches
+        print(f"Sample Size: {size}, Matches: {matches}\n")
+    return results
 
 
 
@@ -1251,7 +1416,43 @@ def save_variable_to_file(variable, file_path):
         pickle.dump(variable, file)
 
 
-# 
+#
 def load_variable_from_file(file_path):
     with open(file_path, 'rb') as file:
         return pickle.load(file)
+
+def find_optimal_threshold(bit_seqs_score):
+    """
+    Finds the threshold that maximizes the sum of:
+    - The number of scores in bit_seqs_score[0] higher than the threshold
+    - The number of scores in bit_seqs_score[1] lower than the threshold
+
+    Parameters:
+    bit_seqs_score (list of lists): A list containing two lists of scores.
+                                    bit_seqs_score[0] for class 0 and
+                                    bit_seqs_score[1] for class 1.
+
+    Returns:
+    tuple:
+        float: The optimal threshold value.
+        int: The maximized sum of counts.
+    """
+    class0 = bit_seqs_score[0]
+    class1 = bit_seqs_score[1]
+
+    # Combine all unique scores and sort them
+    all_scores = sorted(set(class0 + class1))
+
+    max_sum = -1
+    optimal_threshold = None
+
+    for threshold in all_scores:
+        count_class0 = sum(score > threshold for score in class0)
+        count_class1 = sum(score < threshold for score in class1)
+        total = count_class0 + count_class1
+
+        if total > max_sum:
+            max_sum = total
+            optimal_threshold = threshold
+
+    return optimal_threshold, max_sum

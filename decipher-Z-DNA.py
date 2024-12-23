@@ -6,16 +6,14 @@ from seqFountain import SeqFountain
 from deBruijnGraph import DeBruijnGraph
 import getopt
 
-# rep_num = 6
-#
-bit_num = 32
+bit_num = 64
 # work_dir = sys.argv[1]
 # index_seq_file = sys.argv[2]
 # fq_seq_file = sys.argv[3]
-kmer_length = 15
-min_clu_seq_num = 11
-dec_rep_time = 11  # Default value for decoding repetitions
-dec_mode = 0  # 0: decode_key, 1: decode_key_v2
+kmer_length = 13
+min_clu_seq_num = 5
+dec_rep_time = 10  #
+
 
 input_file = "/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.d2306165.pass.barcode23.fq"
 # input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.88848b89.pass.barcode23.fq'
@@ -38,6 +36,15 @@ index_seq_file = r'input_files/32-bit-index-seqs.fa'
 # pass_c = 0b10011101011111101010101101110101.to_bytes(8, 'big')
 # pass_d = 0b00110011010000110010111001000011.to_bytes(8, 'big')
 # pass_e = 0b10101101001111001010110101110101.to_bytes(8, 'big')
+
+
+# z_dna_bits = b'\x01\x00\x01\x00\x01\x01\x01\x00\x00\x00\x01\x01\x01\x01\x00\x01\x01\x00\x00\x00\x00\x01\x00\x01\x00\x00\x01\x01\x00\x01\x01\x00'
+# correct_64_bit_key = b'\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x01\x00\x00\x00\x01\x01\x00\x01\x00\x01\x01\x01\x01'
+correct_64_bit_key = [1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1]
+big_arr = []
+for i in range(1, 11):
+    big_arr = big_arr + load_variable_from_file('data/64-bit_11Seqs-Dec_1E5_New_'+str(i))
+
 #
 #
 opts, args = getopt.getopt(
