@@ -16,7 +16,7 @@ clu_seq_num = 11
 dec_rep_time = 3  #
 dec_mode = 1
 z_threshold = 0.727  # For distinguishing Z-DNA and regular DNA
-
+clu_threshold = 0.35
 input_file = 'data/passA.fastq'
 
 
@@ -26,6 +26,10 @@ index_seq_file = r'input_files/64-bit-index-seqs.fa'
 
 
 
+bit_num_set = False
+index_seq_file_set = False
+clu_threshold_set = False
+z_threshold_set = False
 
 # pass_a = bytes(8)
 # pass_b = 0b10101110001111011000010100110110.to_bytes(8, 'big')
@@ -37,7 +41,7 @@ index_seq_file = r'input_files/64-bit-index-seqs.fa'
 opts, args = getopt.getopt(
     sys.argv[1:],
     '-h-i:',
-    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=']
+    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=', 'clu_threshold=']
 )
 
 usage = 'Usage:\n' + r'      python decipher-Z-DNA.py -i input_file [Options]'
@@ -52,6 +56,7 @@ options += r'      --dec_clu_seq_num <number>             The number of sequence
 options += r'      --dec_rep_time <number>                The number of decoding repetitions, default: ' + str(dec_rep_time) + '\n'
 options += r'      --dec_mode <mode>                      Decoding mode: 0 for decode_key, 1 for decode_key_v2, default: ' + str(dec_mode) + '\n'
 options += r'      --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: ' + str(z_threshold) + '\n'
+options += r'      --clu_threshold <number>               The threshold for clustering, default: 32 bits: 0.15, 64 bits: 0.35' + '\n'
 
 for opt_name, opt_value in opts:
     if opt_name in ('-h', '--help'):
@@ -64,14 +69,18 @@ for opt_name, opt_value in opts:
         output_file = opt_value
     if opt_name == '--bit_num':
         bit_num = int(opt_value)
+        bit_num_set = True
         if bit_num not in [32, 64]:
             raise ValueError("Invalid bit_num. Use 32 or 64.")
         if bit_num == 32:
             index_seq_file = r'input_files/32-bit-index-seqs.fa'
+            clu_threshold = 0.15
         elif bit_num == 64:
             index_seq_file = r'input_files/64-bit-index-seqs.fa'
+            clu_threshold = 0.35
     if opt_name == '--index_seqs':
         index_seq_file = opt_value
+        index_seq_file_set = True
     if opt_name == '--data_seq':
         data_seq_file = opt_value
     if opt_name == '--clu_seq_num':
@@ -95,7 +104,26 @@ for opt_name, opt_value in opts:
             sys.exit(1)
     if opt_name == '--z_threshold':
         z_threshold = float(opt_value)
+        z_threshold_set = True
+    if opt_name == '--clu_threshold':
+        clu_threshold = float(opt_value)
+        clu_threshold_set = True
 
+
+if bit_num not in [32, 64]:
+    raise ValueError("Invalid bit_num. Use 32 or 64.")
+
+if bit_num_set and not clu_threshold_set:
+    if bit_num == 32:
+        clu_threshold = 0.15
+    elif bit_num == 64:
+        clu_threshold = 0.35
+
+if bit_num_set and not index_seq_file_set:
+    if bit_num == 32:
+        index_seq_file = r'input_files/32-bit-index-seqs.fa'
+    elif bit_num == 64:
+        index_seq_file = r'input_files/64-bit-index-seqs.fa'
 
 if not input_file:
     print(usage)
@@ -133,11 +161,11 @@ for i in range(0, dec_rep_time):
 
     # print('Decoding round: ' + str(i+1))
     if dec_mode == 0:
-        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, 0.15)
-        z_key_arr.append(decode_key( clu_seqs, deGD, dec_clu_seq_num, 0.876))
+        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, clu_threshold)
+        z_key_arr.append(decode_key( clu_seqs, deGD, dec_clu_seq_num, z_threshold))
     elif dec_mode == 1:
-        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, 0.35)
-        z_key_arr.append(decode_key_v2(clu_seqs, deGD, 0.727))
+        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, clu_threshold)
+        z_key_arr.append(decode_key_v2(clu_seqs, deGD, z_threshold))
 
 z_dna_bits = maj_vot_key(z_key_arr)
 
