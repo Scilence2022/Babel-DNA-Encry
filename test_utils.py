@@ -946,24 +946,20 @@ def clu_read(km_arr, aread, km_len=15, gp_num=32, min_score=0.55):
 
 
 
-def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=20, kmer_length = 13, bit_num = 32, clu_threshold=0.15):
+def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=11, kmer_length = 13, bit_num = 64, clu_threshold=0.35): #0.15 for old nanopore, 0.35 for latest nanopore
     clu_seqs = []
     clu_seqs_num = []
     for i in range(0, bit_num):
         clu_seqs.append([])
         clu_seqs_num.append(0)
 
-    # clu_seqs.append([])
-    # clu_seqs_num.append(0)
 
-
-    # print("Clustering reads ......")
-    rand_seq_num = 1000
+    rand_seq_num = len(kms_arr)*100
     # max_clu_seq_num = 20
     min_clu_seq_num = 0
-    print("\nCollecting quanlified reads for each index, target number: " + str(min_clu_seq_num))
+    # print("\nCollecting quanlified reads for each index, target number: " + str(max_clu_seq_num))
     while min_clu_seq_num < max_clu_seq_num:
-        print("min_clu_seq_num:" + str(min_clu_seq_num))
+        # print('---------------------------------------------------------------------')
         rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
         for i in range(0, rand_seq_num):
             ard = rand_seqs[i]
@@ -974,15 +970,15 @@ def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=20, kmer_length = 13, bit_num 
                     if clu_seqs_num[gp_id] < max_clu_seq_num:
                         clu_seqs[gp_id].append(ard)
                         clu_seqs_num[gp_id] = clu_seqs_num[gp_id] + 1
-        print(' ###########################################')
+        
         min_n = clu_seqs_num[0]
         for j in clu_seqs_num:
-            print(j, end = '\t')
+            # print(j, end = '\t')
             if j < min_n:
                 min_n = j
-        print(" ")
+        # print("\n")
         min_clu_seq_num = min_n #update the minimal sequence number of clusters
-        # print("min_clu_seq_num")
+        # print("min_clu_seq_num: " + str(min_clu_seq_num))
         # print(min_clu_seq_num)
     return clu_seqs
 
@@ -1080,88 +1076,6 @@ def reverse_complement(seq):
     """
     complement = {'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C', 'N': 'N'}
     return ''.join(complement.get(base, 'N') for base in reversed(seq))
-
-
-def decode_key(clu_seqs, deGD, dec_clu_seq_num=5, threshold=0.86):
-
-    kmer_length = deGD.kmer_len
-    bit_num = len(clu_seqs)
-
-    decoded_bits = []
-    for i in range(0, bit_num):
-        # vals = []
-        # Filtering seqs in case of dec_clu_seq_num < seq number
-        filtered_seqs = filter_seqs(clu_seqs[i], deGD, dec_clu_seq_num)
-
-        deG = DeBruijnGraph()
-        deG.kmer_len = kmer_length
-        deG.add_seqs(filtered_seqs)
-        vals = compare_kmers(deGD.kmers, deG.kmers)
-        if vals > threshold:
-            bit_value = 0
-        else:
-            bit_value = 1
-        # print(bit_value, end="\t")
-        decoded_bits.append(bit_value)
-        # if bit_value != c_bit_values[i]:
-        #     print("",end="\t")
-        #     print(bit_value, end="\t")
-        #     print(c_bit_values[i], end="\n")
-        #
-        #     return False
-        # print('Debugging for each read for bit ' + str(i+1))
-        # for j in range(0, len(clu_seqs[i])):
-        #     deGj = DeBruijnGraph()
-        #     deGj.kmer_len = kmer_length
-        #     deGj.add_seq(clu_seqs[i][j])
-        #     print(compare_kmers(deGD.kmers, deGj.kmers))
-        #
-        # print('End of debugging')
-
-    return decoded_bits
-
-
-def maj_vot_key(key_arr):
-    """
-    Function to compute consensus bits using majority voting algorithm.
-
-    Parameters:
-    key_arr (list of bytes): An array of byte sequences, where each byte sequence is of identical length.
-
-    Returns:
-    bytes: A byte sequence representing the consensus bits derived using majority voting.
-    """
-    if not key_arr or not all(len(key) == len(key_arr[0]) for key in key_arr):
-        raise ValueError("All byte sequences must be of identical length and non-empty.")
-
-    # Determine the number of bits per byte sequence
-    byte_length = len(key_arr[0])
-
-    # Initialize a list to hold the consensus bits
-    consensus_bits = []
-
-    for i in range(byte_length):
-        # Extract the ith byte from each byte sequence
-        byte_column = [key[i] for key in key_arr]
-
-        for bit_position in range(8):
-            # Extract the bits at the current position
-            bit_column = [(byte >> (7 - bit_position)) & 1 for byte in byte_column]
-
-            # Perform majority voting on the current bit position
-            ones = sum(bit_column)
-            zeros = len(bit_column) - ones
-            consensus_bits.append(1 if ones > zeros else 0)
-
-    # Group the consensus bits back into bytes
-    consensus_bytes = bytearray()
-    for i in range(0, len(consensus_bits), 8):
-        byte = 0
-        for j in range(8):
-            byte = (byte << 1) | consensus_bits[i + j]
-        consensus_bytes.append(byte)
-
-    return bytes(consensus_bytes)
 
 
 def zdna_key_value(zdna_bits):
@@ -1270,6 +1184,46 @@ def read_arr(file):
         line = f.readline()
     return ar
 
+
+def decode_key(clu_seqs, deGD, dec_clu_seq_num=5, threshold=0.876):
+
+    kmer_length = deGD.kmer_len
+    bit_num = len(clu_seqs)
+
+    decoded_bits = []
+    for i in range(0, bit_num):
+        # vals = []
+        # Filtering seqs in case of dec_clu_seq_num < seq number
+        filtered_seqs = filter_seqs(clu_seqs[i], deGD, dec_clu_seq_num)
+
+        deG = DeBruijnGraph()
+        deG.kmer_len = kmer_length
+        deG.add_seqs(filtered_seqs)
+        vals = compare_kmers(deGD.kmers, deG.kmers)
+        if vals > threshold:
+            bit_value = 0
+        else:
+            bit_value = 1
+        # print(bit_value, end="\t")
+        decoded_bits.append(bit_value)
+        # if bit_value != c_bit_values[i]:
+        #     print("",end="\t")
+        #     print(bit_value, end="\t")
+        #     print(c_bit_values[i], end="\n")
+        #
+        #     return False
+        # print('Debugging for each read for bit ' + str(i+1))
+        # for j in range(0, len(clu_seqs[i])):
+        #     deGj = DeBruijnGraph()
+        #     deGj.kmer_len = kmer_length
+        #     deGj.add_seq(clu_seqs[i][j])
+        #     print(compare_kmers(deGD.kmers, deGj.kmers))
+        #
+        # print('End of debugging')
+
+    return decoded_bits
+
+
 def decode_key_v2(clu_seqs, deGD, threshold=0.7):
     """
     Decodes the key by analyzing each sequence's k-mers within clustered groups.
@@ -1352,7 +1306,6 @@ def maj_vot_key(key_arr):
         consensus_bits.append(consensus_bit)
 
     return consensus_bits
-
 
 
 

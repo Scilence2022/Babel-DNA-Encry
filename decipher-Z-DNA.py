@@ -11,24 +11,20 @@ bit_num = 64
 # index_seq_file = sys.argv[2]
 # fq_seq_file = sys.argv[3]
 kmer_length = 13
-min_clu_seq_num = 5
-dec_rep_time = 10  #
+dec_clu_seq_num = 5
+clu_seq_num = 11
+dec_rep_time = 3  #
+dec_mode = 1
+z_threshold = 0.727  # For distinguishing Z-DNA and regular DNA
 
+input_file = 'data/passA.fastq'
 
-input_file = "/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.d2306165.pass.barcode23.fq"
-# input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.88848b89.pass.barcode23.fq'
-#
-# # input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-F/20241203-NPL2404883-P6-PBA89524-sup.88848b89.pass.barcode24.fq'
-#
-input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA-Encry-WHXWZKY-202207377A-01/passA.fastq'
-#
-# input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA64Bits/Pass-E/20241203-NPL2404883-P6-PBA89524-sup.e9e022c2.fail.barcode23.fq'
 
 
 data_seq_file = r'input_files/data-seq.fa'
-index_seq_file = r'input_files/32-bit-index-seqs.fa'
+index_seq_file = r'input_files/64-bit-index-seqs.fa'
 
-# fq_seq_file = work_dir + r'/passD.fastq'
+
 
 
 # pass_a = bytes(8)
@@ -38,19 +34,10 @@ index_seq_file = r'input_files/32-bit-index-seqs.fa'
 # pass_e = 0b10101101001111001010110101110101.to_bytes(8, 'big')
 
 
-# z_dna_bits = b'\x01\x00\x01\x00\x01\x01\x01\x00\x00\x00\x01\x01\x01\x01\x00\x01\x01\x00\x00\x00\x00\x01\x00\x01\x00\x00\x01\x01\x00\x01\x01\x00'
-# correct_64_bit_key = b'\x01\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x01\x00\x00\x01\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x01\x00\x00\x00\x01\x01\x00\x01\x00\x01\x01\x01\x01'
-correct_64_bit_key = [1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1]
-big_arr = []
-for i in range(1, 11):
-    big_arr = big_arr + load_variable_from_file('data/64-bit_11Seqs-Dec_1E5_New_'+str(i))
-
-#
-#
 opts, args = getopt.getopt(
     sys.argv[1:],
     '-h-i:',
-    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=']
+    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=']
 )
 
 usage = 'Usage:\n' + r'      python decipher-Z-DNA.py -i input_file [Options]'
@@ -58,11 +45,13 @@ options = 'Options:\n'
 options += r'      -h, --help                             Show help information' + '\n'
 options += r'      -i, --input   <input file>             The fastQ file obtained by Nanopore sequencing' + '\n'
 options += r'      --data_seq   <fasta file>              Sequence file of the data fragment, default: ' + data_seq_file + '\n'
-options += r'      --index_seqs   <fasta file>            Sequence file of the index fragments, default: ' + index_seq_file + '\n'
+options += r'      --index_seqs   <fasta file>            Sequence file of the index fragments'  + '\n'
 options += r'      --bit_num   <number>                   The length of the key, i.e., the number of Bits, default: ' + str(bit_num) + '\n'
-options += r'      --min_clu_seq_num <number>            The minimum number of cluster sequences, default: ' + str(min_clu_seq_num) + '\n'
-options += r'      --dec_rep_time <number>               The number of decoding repetitions, default: ' + str(dec_rep_time) + '\n'
+options += r'      --clu_seq_num <number>                 The number of cluster sequences, default: ' + str(clu_seq_num) + '\n'
+options += r'      --dec_clu_seq_num <number>             The number of sequences for decoding, default: ' + str(dec_clu_seq_num) + ' [Mode 0 only]\n'
+options += r'      --dec_rep_time <number>                The number of decoding repetitions, default: ' + str(dec_rep_time) + '\n'
 options += r'      --dec_mode <mode>                      Decoding mode: 0 for decode_key, 1 for decode_key_v2, default: ' + str(dec_mode) + '\n'
+options += r'      --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: ' + str(z_threshold) + '\n'
 
 for opt_name, opt_value in opts:
     if opt_name in ('-h', '--help'):
@@ -75,12 +64,20 @@ for opt_name, opt_value in opts:
         output_file = opt_value
     if opt_name == '--bit_num':
         bit_num = int(opt_value)
+        if bit_num not in [32, 64]:
+            raise ValueError("Invalid bit_num. Use 32 or 64.")
+        if bit_num == 32:
+            index_seq_file = r'input_files/32-bit-index-seqs.fa'
+        elif bit_num == 64:
+            index_seq_file = r'input_files/64-bit-index-seqs.fa'
     if opt_name == '--index_seqs':
         index_seq_file = opt_value
     if opt_name == '--data_seq':
         data_seq_file = opt_value
-    if opt_name == '--min_clu_seq_num':
-        min_clu_seq_num = int(opt_value)
+    if opt_name == '--clu_seq_num':
+        clu_seq_num = int(opt_value)
+    if opt_name == '--dec_clu_seq_num':
+        dec_clu_seq_num = int(opt_value)
     if opt_name == '--dec_rep_time':
         dec_rep_time = int(opt_value)
     if opt_name == '--dec_mode':
@@ -88,10 +85,17 @@ for opt_name, opt_value in opts:
             dec_mode = int(opt_value)
             if dec_mode not in [0, 1]:
                 raise ValueError
+            if dec_mode == 0:
+                z_threshold = 0.876
+            elif dec_mode == 1:
+                z_threshold = 0.727
         except ValueError:
             print("Invalid dec_mode. Use 0 for decode_key or 1 for decode_key_v2.")
             print(options)
             sys.exit(1)
+    if opt_name == '--z_threshold':
+        z_threshold = float(opt_value)
+
 
 if not input_file:
     print(usage)
@@ -119,21 +123,28 @@ deGD.add_seq(data_seq)
 #data_seq = "GAAAATACTCACCCGTTTACCCGCGAGTTATGGGGGCGTAACTGGACTTATGCCCATAACGGGCAACTGACGGGCTACAAATCACTGGAAACCGGCAACTTCCGCCCGGTCGGTGAAACCGACAGCGAAAAAGCCTTTTGCTGGCTCCTGCATAAATTAACGCAGCGTTACCCGCGCACGCCGGGCAACATGGCGGCAGTGTTTAAATATATCGCCT"
 seq_ft = SeqFountain()
 
-print("Reading gzFQ files ..")
+print("Reading FQ file ..")
 seq_ft.read_FQ(input_file)
+
+print('\n\nDeciphering Z-DNA key ...')
 
 z_key_arr = []
 for i in range(0, dec_rep_time):
+
+    # print('Decoding round: ' + str(i+1))
     if dec_mode == 0:
-        z_key_arr.append(decode_key(kms_arr, seq_ft, deGD, min_clu_seq_num, kmer_length, bit_num))
+        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, 0.15)
+        z_key_arr.append(decode_key( clu_seqs, deGD, dec_clu_seq_num, 0.876))
     elif dec_mode == 1:
-        z_key_arr.append(decode_key_v2(kms_arr, seq_ft, deGD, min_clu_seq_num, kmer_length, bit_num))
+        clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, 0.35)
+        z_key_arr.append(decode_key_v2(clu_seqs, deGD, 0.727))
 
 z_dna_bits = maj_vot_key(z_key_arr)
 
-# z_dna_bits = zip(z_key_arr)
-print("Deciphered Z-DNA Key Bits: ", end="")
+
+print("\nDeciphered Z-DNA Key Bits: ", end="")
 print_zdna_bits(z_dna_bits)
-print("\nDeciphered Z-DNA Key value: ", end="")
+
+print("\n\nDeciphered Z-DNA Key value: ", end="")
 print(zdna_key_value(z_dna_bits))
 
