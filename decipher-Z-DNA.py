@@ -5,8 +5,9 @@ from test_utils import *
 from seqFountain import SeqFountain
 from deBruijnGraph import DeBruijnGraph
 import getopt
+import time
 
-bit_num = 64
+bit_num = 32
 # work_dir = sys.argv[1]
 # index_seq_file = sys.argv[2]
 # fq_seq_file = sys.argv[3]
@@ -113,17 +114,27 @@ for opt_name, opt_value in opts:
 if bit_num not in [32, 64]:
     raise ValueError("Invalid bit_num. Use 32 or 64.")
 
-if bit_num_set and not clu_threshold_set:
+if not clu_threshold_set:
     if bit_num == 32:
         clu_threshold = 0.15
     elif bit_num == 64:
         clu_threshold = 0.35
 
-if bit_num_set and not index_seq_file_set:
+if not index_seq_file_set:
     if bit_num == 32:
         index_seq_file = r'input_files/32-bit-index-seqs.fa'
     elif bit_num == 64:
         index_seq_file = r'input_files/64-bit-index-seqs.fa'
+
+if not z_threshold_set:
+    if bit_num == 32:
+        if dec_mode == 0:
+            z_threshold = 0.876
+        elif dec_mode == 1:
+            z_threshold = 0.205
+    elif bit_num == 64:
+        dec_mode = 1
+        z_threshold = 0.727
 
 if not input_file:
     print(usage)
@@ -156,16 +167,47 @@ seq_ft.read_FQ(input_file)
 
 print('\n\nDeciphering Z-DNA key ...')
 
-z_key_arr = []
-for i in range(0, dec_rep_time):
 
-    # print('Decoding round: ' + str(i+1))
+print('\nStarting decoding rounds...')
+z_key_arr = []
+total_start_time = time.time()
+
+for i in range(0, dec_rep_time):
+    round_start_time = time.time()
+    print(f'\nDecoding round {i+1}/{dec_rep_time}...')
+
     if dec_mode == 0:
+        print('Decoding mode: decode_key')
+        # Step 1: Collect sequences
+        collect_start_time = time.time()
         clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, clu_threshold)
-        z_key_arr.append(decode_key( clu_seqs, deGD, dec_clu_seq_num, z_threshold))
+        collect_time = time.time() - collect_start_time
+        print(f'Sequence collection completed in {collect_time:.2f} seconds')
+
+        # Step 2: Decode key
+        decode_start_time = time.time()
+        z_key_arr.append(decode_key(clu_seqs, deGD, dec_clu_seq_num, z_threshold))
+        decode_time = time.time() - decode_start_time
+        print(f'Key decoding completed in {decode_time:.2f} seconds')
     elif dec_mode == 1:
+        print('Decoding mode: decode_key_v2')
+        # Step 1: Collect sequences
+        collect_start_time = time.time()
         clu_seqs = collect_seqs(kms_arr, seq_ft, clu_seq_num, kmer_length, bit_num, clu_threshold)
+        collect_time = time.time() - collect_start_time
+        print(f'Sequence collection completed in {collect_time:.2f} seconds')
+
+        # Step 2: Decode key
+        decode_start_time = time.time()
         z_key_arr.append(decode_key_v2(clu_seqs, deGD, z_threshold))
+        decode_time = time.time() - decode_start_time
+        print(f'Key decoding completed in {decode_time:.2f} seconds')
+
+    round_time = time.time() - round_start_time
+    print(f'Round {i+1} total time: {round_time:.2f} seconds')
+
+total_time = time.time() - total_start_time
+print(f'\nAll decoding rounds completed in {total_time:.2f} seconds')
 
 z_dna_bits = maj_vot_key(z_key_arr)
 
