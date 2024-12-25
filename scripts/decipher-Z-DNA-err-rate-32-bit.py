@@ -1,9 +1,9 @@
 import sys
 import gzip
 import numpy as np
-from test_utils import *
-from seqFountain import SeqFountain
-from deBruijnGraph import DeBruijnGraph
+from ../test_utils import *
+from ../seqFountain import SeqFountain
+from ../deBruijnGraph import DeBruijnGraph
 import getopt
 import time
 
@@ -18,11 +18,11 @@ dec_rep_time = 100000  #
 z_threshold = 0.876  # For distinguishing Z-DNA and regular DNA
 
 #
-input_file = '/data/songlf/0.DNA_Storage/Z-DNA-Encryption/Z-DNA-Encry-WHXWZKY-202207377A-01/passA.fastq'
+input_file = '../data/passA.fastq'
 #
 
-data_seq_file = r'input_files/data-seq.fa'
-index_seq_file = r'input_files/32-bit-index-seqs.fa'
+data_seq_file = r'../data/data-seq.fa'
+index_seq_file = r'../data/32-bit-index-seqs.fa'
 
 
 # pass_a = bytes(8)
