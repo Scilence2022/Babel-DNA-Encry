@@ -1,4 +1,3 @@
-
 - [Introduction](#introduction)
 - [System Requirements](#system-requirements)
 - [Installation and run](#install-and-run)
@@ -58,9 +57,9 @@ python Encode_Babels.py
 
 After executing this script, the four images will be encoded into corresponding `*.jpg.strands` and `*.jpg.details` files. The `*.jpg.strands` file contains the strand sequences, while the `*.jpg.details` file includes detailed information about the encoding process, which may be useful for debugging.
 
-### 2) Deciper Z-DNA Keys from Nanopore Sequencing Reads
+### 2) Decipher Z-DNA Keys from Nanopore Sequencing Reads
 Script `decipher-Z-DNA.py` is designed to decrypt the encrypted keys in Z-DNA mixtures from Nanopore sequencing reads.
-Real Nanopore sequencing data for three encryption keys—A, B, and D—are available at  https://doi.org/10.6084/m9.figshare.21802257. 
+Real Nanopore sequencing data for three encryption keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
 
 ```sh
 #Checkout the usage of `decipher-Z-DNA.py`
@@ -73,15 +72,44 @@ Options:
       -i, --input   <input file>             The fastQ file obtained by Nanopore sequencing
       --data_seq   <fasta file>              Sequence file of the data fragment, default: input_files/data-seq.fa
       --index_seqs   <fasta file>            Sequence file of the index fragments, default: input_files/index-data-seqs.fa
-
+      --bit_num   <number>                   The length of the key, i.e., the number of Bits, default: 32
+      --clu_seq_num <number>                 The number of cluster sequences, default: 11
+      --dec_clu_seq_num <number>             The number of sequences for decoding, default: 5 [Mode 0 only]
+      --dec_rep_time <number>                The number of decoding repetitions, default: 3
+      --dec_mode <mode>                      Decoding mode: 0 for decode_key(), 1 for decode_key_v2(), default: 1
+      --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: 0.727
+      --clu_threshold <number>               The threshold for clustering, default: 32 bits: 0.15, 64 bits: 0.35
 
 #decrypting key A
 python decipher-Z-DNA.py -i passA.fastq.gz
+
+The script will display progress and timing information for each decoding round:
+- Sequence collection time
+- Key decoding time
+- Total round time
+- Overall decoding time for all rounds
+
+Example output:
+Starting decoding rounds...
+
+Decoding round 1/3...
+Decoding mode: decode_key_v2
+Sequence collection completed in 8.45 seconds
+Key decoding completed in 3.89 seconds
+Round 1 total time: 12.34 seconds
+
+[Additional rounds...]
+
+All decoding rounds completed in 36.68 seconds
+
+Deciphered Z-DNA Key Bits: [bit sequence]
+Deciphered Z-DNA Key value: [key value]
+
 #decrypting key B
 python decipher-Z-DNA.py -i passB.fastq.gz
+
 #decrypting key D
 python decipher-Z-DNA.py -i passD.fastq.gz
-
 ```
 
 
