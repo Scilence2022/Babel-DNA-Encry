@@ -1093,7 +1093,7 @@ def print_zdna_bits(zdna_bits):
 
     bit_num = len(zdna_bits)
     for n in range(0, bit_num):
-        print(zdna_bits[n], end="\t")
+        print(zdna_bits[n], end=" ")
         # print(key_value)
 
 
