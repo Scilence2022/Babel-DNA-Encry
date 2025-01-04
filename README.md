@@ -5,7 +5,7 @@
   - [1) Encryption of Four Images into Strand Sequences](#1-encryption-of-four-images-into-strand-sequences)
   - [2) Decipher Z-DNA Keys from Nanopore Sequencing Reads](#2-decipher-z-dna-keys-from-nanopore-sequencing-reads)
   - [3) Decryption of Encrpted data in Strand Sequences](#3-decryption-of-encrpted-data-in-strand-sequences)
-  - [4) Error Rate Analysis of multiple retrievals](#4-error-rate-analysis-of-multiple-retrieval-with-error_rates_binompy-and-error_rates_simulationpy)
+  - [4) Analysis of Single-Bit Reading Errors in Multiple Retrievals](#4-analysis-of-single-bit-reading-errors-in-multiple-retrievals)
 
 - [License](#license)
 
@@ -135,7 +135,8 @@ python decode-DBGPS.py -i all.assembled.strands -p 2923267382  -o 2923267382.jpg
 ```
 Note: pass D is NOT applied in the encryption of the four images.
 
-### 4) Error Rate Analysis of multiple retrieval with error_rates_binom.py and error_rates_simulation.py
+### 4) Analysis of Single-Bit Reading Errors in Multiple Retrievals
+
 Script "error_rates_binom.py" calculates binomial cumulative distributions for different N and m values, given a probability (E). By default, E = 0.00372166666666667.
 
 Usage:
