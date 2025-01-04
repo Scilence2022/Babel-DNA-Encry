@@ -5,8 +5,8 @@
   - [1) Encryption of Four Images into Strand Sequences](#1-encryption-of-four-images-into-strand-sequences)
   - [2) Decipher Z-DNA Keys from Nanopore Sequencing Reads](#2-decipher-z-dna-keys-from-nanopore-sequencing-reads)
   - [3) Decryption of Encrpted data in Strand Sequences](#3-decryption-of-encrpted-data-in-strand-sequences)
-  - [4) Error Rate Analysis with error_rates_binom.py](#4-error-rate-analysis-with-error_rates_binompy)
-  - [5) Simulation of Error Rates with error_rates_simulation.py](#5-simulation-of-error-rates-with-error_rates_simulationpy)
+  - [4) Error Rate Analysis of multiple retrievals](#4-error-rate-analysis-of-multiple-retrieval-with-error_rates_binompy-and-error_rates_simulationpy)
+
 - [License](#license)
 
 # Introduction
