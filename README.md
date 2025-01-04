@@ -137,22 +137,6 @@ Note: pass D is NOT applied in the encryption of the four images.
 
 ### 4) Analysis of Single-Bit Reading Errors with Multiple Retrievals and Majority Voting
 
-Script "error_rates_binom.py" calculates binomial cumulative distributions for different N and m values, given a probability (E). By default, E = 0.00372166666666667.
-
-Usage:
-```sh
-python error_rates_binom.py -h
-python error_rates_binom.py -E 0.0037
-```
-The script prints a table with columns N, m, E, and the probability term [1 - binom.cdf(m - 1, N, E)].
-
-Example output:
-```
-N       m       E       En
-3       2       0.0037  0.0000135
-5       3       0.0037  0.0000001
-...
-```
 
 Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--64B" flag. It loads the bit decoding data from a compressed file (by default "input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz").
 
@@ -168,6 +152,33 @@ For example:
 • --m_range defines the range of multi-retrieval group sizes tested in the simulation.  
 
 The script prints the number of correct decodings for various values of multi-retrieval attempts.
+
+
+The script "error_rates_binom.py" calculates the theoretical error rates of majority voting in multiple retrievals using a binomial cumulative distribution model. It computes the error rates for various values of N and m, given a probability E. By default, E is set to 0.00372166666666667.
+
+Usage:
+```sh
+python error_rates_binom.py -h
+python error_rates_binom.py -E 0.0037
+```
+The script prints a table with columns N, m, E, and the probability term [1 - binom.cdf(m - 1, N, E)].
+
+Example output:
+```
+N       m       E       En
+3       2       0.00372166666666667     4.144931219129955e-05
+5       3       0.00372166666666667     5.126073229222428e-07
+7       4       0.00372166666666667     6.6547771737646144e-09
+9       5       0.00372166666666667     8.885103763844882e-11
+11      6       0.00372166666666667     1.2081446953970953e-12
+13      7       0.00372166666666667     1.6653345369377348e-14
+15      8       0.00372166666666667     2.220446049250313e-16
+17      9       0.00372166666666667     0.0
+19      10      0.00372166666666667     0.0
+21      11      0.00372166666666667     0.0
+
+...
+```
 
 # License
 
