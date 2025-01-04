@@ -27,6 +27,9 @@ However, it has only been tested on the following system:
 numpy
 pydes
 getopts
+argparse
+math
+scipy
 ```
 
 # Install and Run
@@ -38,7 +41,7 @@ git clone https://github.com/Scilence2022/Babel-DNA-Encry.git
 cd Babel-DNA-Encry
 
 #Install Python dependencies
-pip install numpy pydes getopts
+pip install -r requirements.txt
 
 #Run the scripts:
 python Encode_Babels.py
