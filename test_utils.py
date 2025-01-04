@@ -11,6 +11,7 @@ import math
 import glass
 from operator import itemgetter
 import pickle
+import gzip
 
 
 #20190701
@@ -1409,3 +1410,116 @@ def find_optimal_threshold(bit_seqs_score):
             optimal_threshold = threshold
 
     return optimal_threshold, max_sum
+
+
+def pick_single_bit(input_list, index):
+    """
+    This function takes a list of dictionaries with lists of 1s and 0s.
+    It picks one value (either 1 or 0) from each list and returns a new list.
+
+    Parameters:
+    input_list (list): A list where each item is a dictionary with a list of bits.
+    index (int): The index to pick from each list.
+
+    Returns:
+    list: A list of dictionaries where each dictionary contains a single bit value.
+    """
+    result = []
+
+    for item in input_list:
+        bit_list = item
+        if 0 <= index < len(bit_list):
+            result.append([bit_list[index]])
+        else:
+            result.append([None])  # If index is out of bounds, append None
+
+    return result
+
+def test_bit_err(big_arr, index):
+    wn = 0
+    wc = 0
+    for a in big_arr:
+        if not a[index] == 1:
+            wn+=1
+        else:
+            wc+=1
+    print(wn)
+    print(wc)
+
+
+
+
+
+from collections import Counter
+def collect_bits_based_on_key(big_arr, bit_key, bit_value=0):
+    """
+    Collect bit values from big_arr that align with the '0' positions in bit_key.
+
+    Parameters:
+    big_arr (list of lists): The big array containing bit values.
+    bit_key (list): The correct key where 0s indicate which columns to collect.
+
+    Returns:
+    list of lists: A new list where each sublist contains the collected bits based on the bit_key.
+    """
+    collected_bits = []
+
+    # Iterate through each list in big_arr
+    for arr in big_arr:
+        collected = []
+        # Iterate through each bit in arr
+        for i, bit in enumerate(arr):
+            if bit_key[i] == bit_value:  # If bit_key at the same index is 0
+                collected.append(bit)
+        collected_bits.extend(collected)
+
+    return collected_bits
+
+
+def maj_vot_bits(lst):
+    # Count the occurrences of each value in the list
+    count = Counter(lst)
+
+    # Get the most common element and its frequency
+    most_common_value, most_common_count = count.most_common(1)[0]
+
+    return most_common_value
+
+
+def run_mul_retri_bits(bit_arr, m_range=13, rep_size=10000, correct_bit_value=0):
+
+    suc = 0
+    for i in range(0, rep_size):
+        if maj_vot_bits(random.sample(bit_arr, m_range)) == correct_bit_value:
+            suc+=1
+    return suc
+
+
+def load_variable_from_gzfile(file_path):
+    """
+    Load a Python variable from a gzipped file using pickle.
+
+    Parameters:
+        file_path (str): The path to the gzipped file.
+
+    Returns:
+        The Python variable stored in the gzipped file.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+        pickle.UnpicklingError: If the file content cannot be unpickled.
+        OSError: If there is an issue opening the gzipped file.
+    """
+    try:
+        with gzip.open(file_path, 'rb') as file:
+            variable = pickle.load(file)
+        return variable
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+        raise
+    except pickle.UnpicklingError:
+        print(f"Error: Failed to unpickle the contents of '{file_path}'.")
+        raise
+    except OSError as e:
+        print(f"Error: An OS error occurred while opening '{file_path}': {e}")
+        raise

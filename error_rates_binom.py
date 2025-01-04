@@ -2,11 +2,27 @@ import math
 import argparse
 from scipy.stats import binom
 
-# Function to parse the command line argument
+# Function to parse the command line arguments
 def parse_args():
-    parser = argparse.ArgumentParser(description='Calculate binomial cumulative distribution.')
-    # Set default value for E and allow optional override from command line
-    parser.add_argument('-E', type=float, default=0.00372166666666667, help='The value of E to use in the calculations (default: 0.00372166666666667)')
+    parser = argparse.ArgumentParser(
+        description='Calculate binomial cumulative distribution.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=False  # Disable the default help
+    )
+    # Manually add the help option
+    parser.add_argument(
+        '-h', '--help',
+        action='help',
+        default=argparse.SUPPRESS,
+        help='Show this help message and exit.'
+    )
+    # Add other arguments
+    parser.add_argument(
+        '-E',
+        type=float,
+        default=0.00372166666666667,
+        help='The value of E to use in the calculations'
+    )
     return parser.parse_args()
 
 def main():
@@ -26,4 +42,4 @@ def main():
         print(1 - binom.cdf(m - 1, N, E))
 
 if __name__ == '__main__':
-    main()
+    main() 
