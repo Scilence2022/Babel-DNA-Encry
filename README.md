@@ -10,9 +10,12 @@
 - [License](#license)
 
 # Introduction
-In the rapidly evolving landscape of digital security, traditional silicon-based storage media face significant limitations in durability and vulnerability to cyber-attacks. Addressing these challenges, Z-DNA encryption and Babel-DNA encryption represent groundbreaking advancements in secure data storage. The Z-DNA encryption system utilizes noncanonical Z-DNA—a unique DNA structure—to create a highly secure storage medium. This system is particularly notable for its nonreplicable feature, which prevents unauthorized data duplication and enhances long-term data integrity. 
+In the rapidly evolving landscape of digital security, traditional silicon-based storage media face critical limitations in durability and vulnerability to cyber-attacks. To address these challenges, Z-DNA encryption and Babel-DNA encryption represent cutting-edge advancements in secure data storage. 
 
-Building upon the principles of Z-DNA encryption, the Babel-DNA encryption software introduces an additional layer of security. Drawing inspiration from the Tower of Babel's mythological strategy of creating confusion, this system uses a two-layer coding approach to encrypt and distribute data across numerous DNA strands. By incorporating deliberate misinformation in response to mismatched keys, Babel-DNA further confounds potential intruders, making it an ideal solution for safeguarding highly sensitive information. Together, these innovative encryption technologies offer a robust alternative to traditional storage media, ensuring the security and integrity of critical digital data in an increasingly interconnected world.
+The Z-DNA encryption system utilizes noncanonical Z-DNA—a unique, naturally occurring nucleic acid—to create a highly secure, compact storage medium for encryption keys. A key feature of this system is its nonreplicability, which prevents unauthorized duplication of data.
+
+Inspired by the mythological Tower of Babel, which employed confusion as a strategy, Babel-DNA incorporates a two-layer coding method for encrypting and storing large datasets across multiple DNA strands. By introducing deliberate misinformation in response to mismatched keys, Babel-DNA effectively disrupts potential intruders, making it an ideal solution for protecting sensitive information.
+Together, these groundbreaking encryption technologies offer a robust alternative to traditional storage media, ensuring the security and integrity of critical digital data in an increasingly interconnected world.
 
 # System Requirements
 ## Hardware requirements
