@@ -15,6 +15,7 @@ In the rapidly evolving landscape of digital security, traditional silicon-based
 The Z-DNA encryption system utilizes noncanonical Z-DNA—a unique, naturally occurring nucleic acid—to create a highly secure, compact storage medium for encryption keys. A key feature of this system is its nonreplicability, which prevents unauthorized duplication of data.
 
 Inspired by the mythological Tower of Babel, which employed confusion as a strategy, Babel-DNA incorporates a two-layer coding method for encrypting and storing large datasets across multiple DNA strands. By introducing deliberate misinformation in response to mismatched keys, Babel-DNA effectively disrupts potential intruders, making it an ideal solution for protecting sensitive information.
+
 Together, these groundbreaking encryption technologies offer a robust alternative to traditional storage media, ensuring the security and integrity of critical digital data in an increasingly interconnected world.
 
 # System Requirements
