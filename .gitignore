@@ -1,3 +1,4 @@
 data/
 test_data/
-_pycache_
+_pycache_/
+.idea/
