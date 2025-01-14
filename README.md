@@ -152,13 +152,29 @@ Note: pass D is NOT applied in the encryption of the four images.
 ### 4) Analysis of Single-Bit Reading Errors with Multiple Retrievals and Majority Voting
 
 
-Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--64B" flag. It loads the bit decoding data from a compressed file (by default "input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz").
+Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. 
 
 Usage:
 ```sh
 python error_rates_simulation.py -h
 python error_rates_simulation.py -i input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz --rep_size 10000 --m_range 13
+
+#Example output:
+Using 32-Bit key.
+Loading bit decoding data from: input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz
+Number of Multi-Retrievals: 3           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 5           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 7           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 9           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 11          Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 13          Number of correct decodings: 10000/10000
+```
+
+By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--64B" flag. It loads the bit decoding data from a compressed file (by default "input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz").
+
+```sh
 python error_rates_simulation.py --64B
+
 ```
 For example:
 • --64B selects the 64-Bit key.  
@@ -166,6 +182,7 @@ For example:
 • --m_range defines the range of multi-retrieval group sizes tested in the simulation.  
 
 The script prints the number of correct decodings for various values of multi-retrieval attempts.
+
 
 
 The script "error_rates_binom.py" calculates the theoretical error rates of majority voting in multiple retrievals using a binomial cumulative distribution model. It computes the error rates for various values of N and m, given a probability E. By default, E is set to 0.00372166666666667.
