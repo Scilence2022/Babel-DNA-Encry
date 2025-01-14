@@ -176,7 +176,7 @@ By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--6
 python error_rates_simulation.py --64B
 
 ```
-For example:
+
 • --64B selects the 64-Bit key.  
 • --rep_size sets the number of repetitions.  
 • --m_range defines the range of multi-retrieval group sizes tested in the simulation.  
