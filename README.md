@@ -68,10 +68,12 @@ After executing this script, the four images will be encoded into corresponding 
 
 ### 2) Decipher Z-DNA Keys from Nanopore Sequencing Reads
 Script "decipher-Z-DNA.py" is designed to decrypt the encrypted keys in Z-DNA mixtures from Nanopore sequencing reads.  
+
 Real Nanopore (r9.4.1) sequencing data for three 32-bit Z-DNA keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
+
 Real Nanopore (r10.4.1) sequencing data for three 64-bit Z-DNA key E and its amplified version key F—are available at https://doi.org/10.6084/m9.figshare.28016012.v1. 
 
-Download the sequencing FastQ files and place them in the data/ folder.
+Download the sequencing FastQ files and place them in the data/ folder. 
 Please use gzip to decompress the *.gz files before running the following shell commands. 
 
 ```sh
