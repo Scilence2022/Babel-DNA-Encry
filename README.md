@@ -68,7 +68,13 @@ After executing this script, the four images will be encoded into corresponding 
 
 ### 2) Decipher Z-DNA Keys from Nanopore Sequencing Reads
 Script "decipher-Z-DNA.py" is designed to decrypt the encrypted keys in Z-DNA mixtures from Nanopore sequencing reads.  
-Real Nanopore sequencing data for three encryption keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
+
+Real Nanopore (r9.4.1) sequencing data for three 32-bit Z-DNA keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
+
+Real Nanopore (r10.4.1) sequencing data for the 64-bit Z-DNA key E and its amplified version key F—are available at https://doi.org/10.6084/m9.figshare.28016012.v1. 
+
+Download the sequencing FastQ files and place them in the data/ folder. 
+Please use gzip to decompress the *.gz files before running the following shell commands. 
 
 ```sh
 #Checkout usage of decipher-Z-DNA.py
@@ -89,16 +95,23 @@ Options:
       --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: 0.727
       --clu_threshold <number>               The threshold for clustering, default: 32 bits: 0.15, 64 bits: 0.35
 
-#decrypting key A
-python decipher-Z-DNA.py -i passA.fastq.gz
+#decrypting 32-bit key A
+python decipher-Z-DNA.py -i data/passA.fastq
 
 [... output truncated for brevity ...]
 
-#decrypting key B
-python decipher-Z-DNA.py -i passB.fastq.gz
+#decrypting 32-bit key B
+python decipher-Z-DNA.py -i data/passB.fastq
 
-#decrypting key D
-python decipher-Z-DNA.py -i passD.fastq.gz
+#decrypting 32-bit key D
+python decipher-Z-DNA.py -i data/passD.fastq
+
+#decrypting 64-bit key E
+python decipher-Z-DNA.py --bit_num 64 -i data/64-bit-key.fq
+
+#decrypting 64-bit key F (Amplified from key E)
+python decipher-Z-DNA.py --bit_num 64 -i data/64-bit-key-PCR.fq
+
 ```
 
 ### 3) Decryption of Encrpted data in Strand Sequences
@@ -139,20 +152,37 @@ Note: pass D is NOT applied in the encryption of the four images.
 ### 4) Analysis of Single-Bit Reading Errors with Multiple Retrievals and Majority Voting
 
 
-Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--64B" flag. It loads the bit decoding data from a compressed file (by default "input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz").
+Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. 
 
 Usage:
 ```sh
 python error_rates_simulation.py -h
 python error_rates_simulation.py -i input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz --rep_size 10000 --m_range 13
-python error_rates_simulation.py --64B
+
+#Example output:
+Using 32-Bit key.
+Loading bit decoding data from: input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz
+Number of Multi-Retrievals: 3           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 5           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 7           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 9           Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 11          Number of correct decodings: 10000/10000
+Number of Multi-Retrievals: 13          Number of correct decodings: 10000/10000
 ```
-For example:
+
+By default, it uses a 32-Bit key, but you can specify a 64-Bit key with the "--64B" flag. It loads the bit decoding data from a compressed file (by default "input_files/32-Bit-5-of-100Seqs-2E5-Decs.gz").
+
+```sh
+python error_rates_simulation.py --64B
+
+```
+
 • --64B selects the 64-Bit key.  
 • --rep_size sets the number of repetitions.  
 • --m_range defines the range of multi-retrieval group sizes tested in the simulation.  
 
 The script prints the number of correct decodings for various values of multi-retrieval attempts.
+
 
 
 The script "error_rates_binom.py" calculates the theoretical error rates of majority voting in multiple retrievals using a binomial cumulative distribution model. It computes the error rates for various values of N and m, given a probability E. By default, E is set to 0.00372166666666667.
