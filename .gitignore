@@ -2,3 +2,7 @@ data/
 test_data/
 __pycache__/
 .idea/
+README_alignment.md
+*.strands
+*.details
+
