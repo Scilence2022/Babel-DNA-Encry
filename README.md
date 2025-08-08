@@ -3,16 +3,16 @@
 - [Installation and run](#install-and-run)
 - [Script usage](#script-usage)
   - [1) Encryption of Four Images into Strand Sequences](#1-encryption-of-four-images-into-strand-sequences)
-  - [2) Decipher Z-DNA Keys from Nanopore Sequencing Reads](#2-decipher-z-dna-keys-from-nanopore-sequencing-reads)
+  - [2) Decipher ZAT-DNA Keys from Nanopore Sequencing Reads](#2-decipher-ZAT-DNA-keys-from-nanopore-sequencing-reads)
   - [3) Decryption of Encrpted data in Strand Sequences](#3-decryption-of-encrpted-data-in-strand-sequences)
   - [4) Analysis of Single-Bit Reading Errors with Multiple Retrievals and Majority Voting](#4-analysis-of-single-bit-reading-errors-with-multiple-retrievals-and-majority-voting)
 
 - [License](#license)
 
 # Introduction
-In the rapidly evolving landscape of digital security, traditional silicon-based storage media face critical limitations in durability and vulnerability to cyber-attacks. To address these challenges, Z-DNA encryption and Babel-DNA encryption represent cutting-edge advancements in secure data storage. 
+In the rapidly evolving landscape of digital security, traditional silicon-based storage media face critical limitations in durability and vulnerability to cyber-attacks. To address these challenges, ZAT-DNA encryption and Babel-DNA encryption represent cutting-edge advancements in secure data storage. 
 
-The Z-DNA encryption system utilizes noncanonical Z-DNA—a unique, naturally occurring nucleic acid—to create a highly secure, compact storage medium for encryption keys. A key feature of this system is its nonreplicability, which prevents unauthorized duplication of data.
+The ZAT-DNA encryption system utilizes noncanonical ZAT-DNA—a unique, naturally occurring nucleic acid—to create a highly secure, compact storage medium for encryption keys. A key feature of this system is its nonreplicability, which prevents unauthorized duplication of data.
 
 Inspired by the mythological Tower of Babel, which employed confusion as a strategy, Babel-DNA incorporates a two-layer coding method for encrypting and storing large datasets across multiple DNA strands. By introducing deliberate misinformation in response to mismatched keys, Babel-DNA effectively disrupts potential intruders, making it an ideal solution for protecting sensitive information.
 
@@ -52,7 +52,7 @@ pip install -r requirements.txt
 
 #Run the scripts:
 python Encode_Babels.py
-python decipher-Z-DNA.py 
+python decipher-ZAT-DNA.py 
 ...
 ```
 
@@ -66,22 +66,22 @@ python Encode_Babels.py
 
 After executing this script, the four images will be encoded into corresponding "*.jpg.strands" and "*.jpg.details" files. The "*.jpg.strands" file contains the strand sequences, while the "*.jpg.details" file includes detailed information about the encoding process, which may be useful for debugging.
 
-### 2) Decipher Z-DNA Keys from Nanopore Sequencing Reads
-Script "decipher-Z-DNA.py" is designed to decrypt the encrypted keys in Z-DNA mixtures from Nanopore sequencing reads.  
+### 2) Decipher ZAT-DNA Keys from Nanopore Sequencing Reads
+Script "decipher-ZAT-DNA.py" is designed to decrypt the encrypted keys in ZAT-DNA mixtures from Nanopore sequencing reads.  
 
-Real Nanopore (r9.4.1) sequencing data for three 32-bit Z-DNA keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
+Real Nanopore (r9.4.1) sequencing data for three 32-bit ZAT-DNA keys—A, B, and D—are available at https://doi.org/10.6084/m9.figshare.21802257. 
 
-Real Nanopore (r10.4.1) sequencing data for the 64-bit Z-DNA key E and its amplified version key F—are available at https://doi.org/10.6084/m9.figshare.28016012.v1. 
+Real Nanopore (r10.4.1) sequencing data for the 64-bit ZAT-DNA key E and its amplified version key F—are available at https://doi.org/10.6084/m9.figshare.28016012.v1. 
 
 Download the sequencing FastQ files and place them in the data/ folder. 
 Please use gzip to decompress the *.gz files before running the following shell commands. 
 
 ```sh
-#Checkout usage of decipher-Z-DNA.py
-python decipher-Z-DNA.py -h
+#Checkout usage of decipher-ZAT-DNA.py
+python decipher-ZAT-DNA.py -h
 
 Usage:
-      python decipher-Z-DNA.py -i input_file [Options]
+      python decipher-ZAT-DNA.py -i input_file [Options]
 Options:
       -h, --help                             Show help information
       -i, --input   <input file>             The fastQ file obtained by Nanopore sequencing
@@ -92,25 +92,25 @@ Options:
       --dec_clu_seq_num <number>             The number of sequences for decoding, default: 5 [Mode 0 only]
       --dec_rep_time <number>                The number of decoding repetitions, default: 3
       --dec_mode <mode>                      Decoding mode: 0 for decode_key(), 1 for decode_key_v2(), default: 1
-      --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: 0.727
+      --z_threshold <number>                 The threshold for distinguishing ZAT-DNA and regular DNA, default: 0.727
       --clu_threshold <number>               The threshold for clustering, default: 32 bits: 0.15, 64 bits: 0.35
 
 #decrypting 32-bit key A
-python decipher-Z-DNA.py -i data/passA.fastq
+python decipher-ZAT-DNA.py -i data/passA.fastq
 
 [... output truncated for brevity ...]
 
 #decrypting 32-bit key B
-python decipher-Z-DNA.py -i data/passB.fastq
+python decipher-ZAT-DNA.py -i data/passB.fastq
 
 #decrypting 32-bit key D
-python decipher-Z-DNA.py -i data/passD.fastq
+python decipher-ZAT-DNA.py -i data/passD.fastq
 
 #decrypting 64-bit key E
-python decipher-Z-DNA.py --bit_num 64 -i data/64-bit-key.fq
+python decipher-ZAT-DNA.py --bit_num 64 -i data/64-bit-key.fq
 
 #decrypting 64-bit key F (Amplified from key E)
-python decipher-Z-DNA.py --bit_num 64 -i data/64-bit-key-PCR.fq
+python decipher-ZAT-DNA.py --bit_num 64 -i data/64-bit-key-PCR.fq
 
 ```
 
@@ -152,7 +152,7 @@ Note: pass D is NOT applied in the encryption of the four images.
 ### 4) Analysis of Single-Bit Reading Errors with Multiple Retrievals and Majority Voting
 
 
-Script "error_rates_simulation.py" simulates decoding error rates for Z-DNA keys. 
+Script "error_rates_simulation.py" simulates decoding error rates for ZAT-DNA keys. 
 
 Usage:
 ```sh

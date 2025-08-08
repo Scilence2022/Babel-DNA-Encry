@@ -16,7 +16,7 @@ dec_clu_seq_num = 5
 clu_seq_num = 11
 dec_rep_time = 3  #
 dec_mode = 1
-z_threshold = 0.727  # For distinguishing Z-DNA and regular DNA
+z_threshold = 0.727  # For distinguishing ZAT-DNA and regular DNA
 clu_threshold = 0.35
 input_file = 'data/passA.fastq'
 
@@ -45,7 +45,7 @@ opts, args = getopt.getopt(
     ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=', 'clu_threshold=']
 )
 
-usage = 'Usage:\n' + r'      python decipher-Z-DNA.py -i input_file [Options]'
+usage = 'Usage:\n' + r'      python decipher-ZAT-DNA.py -i input_file [Options]'
 options = 'Options:\n'
 options += r'      -h, --help                             Show help information' + '\n'
 options += r'      -i, --input   <input file>             The fastQ file obtained by Nanopore sequencing' + '\n'
@@ -56,7 +56,7 @@ options += r'      --clu_seq_num <number>                 The number of cluster 
 options += r'      --dec_clu_seq_num <number>             The number of sequences for decoding, default: ' + str(dec_clu_seq_num) + ' [Mode 0 only]\n'
 options += r'      --dec_rep_time <number>                The number of decoding repetitions, default: ' + str(dec_rep_time) + '\n'
 options += r'      --dec_mode <mode>                      Decoding mode: 0 for decode_key, 1 for decode_key_v2, default: ' + str(dec_mode) + '\n'
-options += r'      --z_threshold <number>                 The threshold for distinguishing Z-DNA and regular DNA, default: ' + str(z_threshold) + '\n'
+options += r'      --z_threshold <number>                 The threshold for distinguishing ZAT-DNA and regular DNA, default: ' + str(z_threshold) + '\n'
 options += r'      --clu_threshold <number>               The threshold for clustering, default: 32 bits: 0.15, 64 bits: 0.35' + '\n'
 
 for opt_name, opt_value in opts:
@@ -165,7 +165,7 @@ seq_ft = SeqFountain()
 print("Reading FQ file ..")
 seq_ft.read_FQ(input_file)
 
-print('\n\nDeciphering Z-DNA key ...')
+print('\n\nDeciphering ZAT-DNA key ...')
 
 
 print('\nStarting decoding rounds...')
@@ -212,9 +212,9 @@ print(f'\nAll decoding rounds completed in {total_time:.2f} seconds')
 z_dna_bits = maj_vot_key(z_key_arr)
 
 
-print("\nDeciphered Z-DNA Key Bits: ", end="")
+print("\nDeciphered ZAT-DNA Key Bits: ", end="")
 print_zdna_bits(z_dna_bits)
 
-print("\n\nDeciphered Z-DNA Key value: ", end="")
+print("\n\nDeciphered ZAT-DNA Key value: ", end="")
 print(zdna_key_value(z_dna_bits))
 
