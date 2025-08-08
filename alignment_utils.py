@@ -1,5 +1,5 @@
 """
-Alignment-based utility functions for Z-DNA deciphering.
+Alignment-based utility functions for ZAT-DNA deciphering.
 This module provides sequence alignment-based alternatives to k-mer Jaccard similarity methods.
 """
 
@@ -9,6 +9,7 @@ from Bio.Seq import Seq
 import numpy as np
 from difflib import SequenceMatcher
 import re
+from utils import DNA_rev_complement
 
 class AlignmentConfig:
     """Configuration class for alignment parameters."""
@@ -22,7 +23,19 @@ class AlignmentConfig:
         self.gap_open = gap_open
         self.gap_extend = gap_extend
 
-def calculate_kmer_similarity(seq1, seq2, k=6):
+def _best_strand_similarity(seq1, seq2, compute_similarity):
+    """Return max similarity across both strands for both sequences."""
+    rc1 = DNA_rev_complement(seq1)
+    rc2 = DNA_rev_complement(seq2)
+    return max(
+        compute_similarity(seq1, seq2),
+        compute_similarity(seq1, rc2),
+        compute_similarity(rc1, seq2),
+        compute_similarity(rc1, rc2),
+    )
+
+
+def calculate_kmer_similarity(seq1, seq2, k=6, consider_revcomp=False):
     """
     Fast k-mer based similarity calculation.
     
@@ -36,6 +49,12 @@ def calculate_kmer_similarity(seq1, seq2, k=6):
     """
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_kmer_similarity(a, b, k=k, consider_revcomp=False),
+        )
     
     # Generate k-mers
     kmers1 = set()
@@ -56,7 +75,7 @@ def calculate_kmer_similarity(seq1, seq2, k=6):
     
     return intersection / union if union > 0 else 0.0
 
-def calculate_sliding_window_similarity(seq1, seq2, window_size=50, step=10):
+def calculate_sliding_window_similarity(seq1, seq2, window_size=50, step=10, consider_revcomp=False):
     """
     Fast sliding window similarity calculation.
     
@@ -71,6 +90,14 @@ def calculate_sliding_window_similarity(seq1, seq2, window_size=50, step=10):
     """
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_sliding_window_similarity(
+                a, b, window_size=window_size, step=step, consider_revcomp=False
+            ),
+        )
     
     max_similarity = 0.0
     
@@ -90,7 +117,7 @@ def calculate_sliding_window_similarity(seq1, seq2, window_size=50, step=10):
     
     return max_similarity
 
-def calculate_lcs_similarity(seq1, seq2):
+def calculate_lcs_similarity(seq1, seq2, consider_revcomp=False):
     """
     Calculate similarity using Longest Common Subsequence (LCS).
     
@@ -103,6 +130,12 @@ def calculate_lcs_similarity(seq1, seq2):
     """
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_lcs_similarity(a, b, consider_revcomp=False),
+        )
     
     # Use SequenceMatcher for fast LCS-like calculation
     matcher = SequenceMatcher(None, seq1, seq2)
@@ -110,7 +143,7 @@ def calculate_lcs_similarity(seq1, seq2):
     
     return similarity
 
-def calculate_edit_distance_similarity(seq1, seq2, max_distance=None):
+def calculate_edit_distance_similarity(seq1, seq2, max_distance=None, consider_revcomp=False):
     """
     Calculate similarity based on edit distance with early termination.
     
@@ -124,6 +157,14 @@ def calculate_edit_distance_similarity(seq1, seq2, max_distance=None):
     """
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_edit_distance_similarity(
+                a, b, max_distance=max_distance, consider_revcomp=False
+            ),
+        )
     
     len1, len2 = len(seq1), len(seq2)
     max_len = max(len1, len2)
@@ -162,7 +203,7 @@ def calculate_edit_distance_similarity(seq1, seq2, max_distance=None):
     
     return max(0.0, similarity)
 
-def calculate_local_alignment_similarity_fast(seq1, seq2, config=None):
+def calculate_local_alignment_similarity_fast(seq1, seq2, config=None, consider_revcomp=False):
     """
     Fast local alignment using BioPython with optimized parameters.
     
@@ -179,6 +220,14 @@ def calculate_local_alignment_similarity_fast(seq1, seq2, config=None):
     
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_local_alignment_similarity_fast(
+                a, b, config=config, consider_revcomp=False
+            ),
+        )
     
     # Truncate very long sequences for speed
     max_len = 300
@@ -208,7 +257,7 @@ def calculate_local_alignment_similarity_fast(seq1, seq2, config=None):
     similarity = max(0.0, score / max_possible_score) if max_possible_score > 0 else 0.0
     return similarity
 
-def calculate_hybrid_similarity(seq1, seq2, config=None, method='auto'):
+def calculate_hybrid_similarity(seq1, seq2, config=None, method='auto', consider_revcomp=False):
     """
     Hybrid similarity calculation using multiple methods.
     
@@ -223,6 +272,14 @@ def calculate_hybrid_similarity(seq1, seq2, config=None, method='auto'):
     """
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_hybrid_similarity(
+                a, b, config=config, method=method, consider_revcomp=False
+            ),
+        )
     
     if method == 'auto':
         # Choose method based on sequence length
@@ -248,7 +305,7 @@ def calculate_hybrid_similarity(seq1, seq2, config=None, method='auto'):
         # Default to k-mer for speed
         return calculate_kmer_similarity(seq1, seq2, k=6)
 
-def calculate_pairwise_alignment_similarity(seq1, seq2, config=None):
+def calculate_pairwise_alignment_similarity(seq1, seq2, config=None, consider_revcomp=False):
     """
     Calculate similarity between two sequences using pairwise global alignment.
     
@@ -265,6 +322,14 @@ def calculate_pairwise_alignment_similarity(seq1, seq2, config=None):
     
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_pairwise_alignment_similarity(
+                a, b, config=config, consider_revcomp=False
+            ),
+        )
     
     # Use global alignment with custom scoring
     alignments = pairwise2.align.globalms(
@@ -285,7 +350,7 @@ def calculate_pairwise_alignment_similarity(seq1, seq2, config=None):
     similarity = max(0.0, score / max_possible_score) if max_possible_score > 0 else 0.0
     return similarity
 
-def calculate_local_alignment_similarity(seq1, seq2, config=None):
+def calculate_local_alignment_similarity(seq1, seq2, config=None, consider_revcomp=False):
     """
     Calculate similarity between two sequences using local alignment (Smith-Waterman).
     
@@ -302,6 +367,14 @@ def calculate_local_alignment_similarity(seq1, seq2, config=None):
     
     if not seq1 or not seq2:
         return 0.0
+    if consider_revcomp:
+        return _best_strand_similarity(
+            seq1,
+            seq2,
+            lambda a, b: calculate_local_alignment_similarity(
+                a, b, config=config, consider_revcomp=False
+            ),
+        )
     
     # Use local alignment
     alignments = pairwise2.align.localms(
@@ -322,7 +395,7 @@ def calculate_local_alignment_similarity(seq1, seq2, config=None):
     similarity = max(0.0, score / max_possible_score) if max_possible_score > 0 else 0.0
     return similarity
 
-def find_best_alignment_match(query_seq, reference_seqs, config=None, alignment_type='hybrid'):
+def find_best_alignment_match(query_seq, reference_seqs, config=None, alignment_type='hybrid', consider_revcomp=False):
     """
     Find the best matching reference sequence for a query sequence using alignment.
     
@@ -344,19 +417,19 @@ def find_best_alignment_match(query_seq, reference_seqs, config=None, alignment_
     
     # Choose similarity function based on alignment type
     if alignment_type == 'global':
-        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'local':
-        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'kmer':
-        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6)
+        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6, consider_revcomp=consider_revcomp)
     elif alignment_type == 'sliding':
-        similarity_func = lambda s1, s2: calculate_sliding_window_similarity(s1, s2)
+        similarity_func = lambda s1, s2: calculate_sliding_window_similarity(s1, s2, consider_revcomp=consider_revcomp)
     elif alignment_type == 'lcs':
-        similarity_func = lambda s1, s2: calculate_lcs_similarity(s1, s2)
+        similarity_func = lambda s1, s2: calculate_lcs_similarity(s1, s2, consider_revcomp=consider_revcomp)
     elif alignment_type == 'edit':
-        similarity_func = lambda s1, s2: calculate_edit_distance_similarity(s1, s2)
+        similarity_func = lambda s1, s2: calculate_edit_distance_similarity(s1, s2, consider_revcomp=consider_revcomp)
     else:  # hybrid or default
-        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config, consider_revcomp=consider_revcomp)
     
     for i, ref_seq in enumerate(reference_seqs):
         score = similarity_func(query_seq, ref_seq)
@@ -367,7 +440,7 @@ def find_best_alignment_match(query_seq, reference_seqs, config=None, alignment_
     return best_index, best_score
 
 def cluster_sequences_by_alignment(sequences, reference_seqs, config=None, 
-                                 threshold=0.35, alignment_type='hybrid'):
+                                 threshold=0.35, alignment_type='hybrid', consider_revcomp=False):
     """
     Cluster sequences based on their best alignment match to reference sequences.
     
@@ -389,7 +462,7 @@ def cluster_sequences_by_alignment(sequences, reference_seqs, config=None,
     
     for seq in sequences:
         best_idx, best_score = find_best_alignment_match(
-            seq, reference_seqs, config, alignment_type
+            seq, reference_seqs, config, alignment_type, consider_revcomp
         )
         
         if best_score >= threshold:
@@ -400,7 +473,7 @@ def cluster_sequences_by_alignment(sequences, reference_seqs, config=None,
     return clusters, unassigned
 
 def calculate_consensus_similarity(sequences, reference_seq, config=None, 
-                                 alignment_type='hybrid', method='average'):
+                                 alignment_type='hybrid', method='average', consider_revcomp=False):
     """
     Calculate consensus similarity between a list of sequences and a reference.
     
@@ -422,13 +495,13 @@ def calculate_consensus_similarity(sequences, reference_seq, config=None,
     
     # Choose similarity function
     if alignment_type == 'global':
-        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'local':
-        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'kmer':
-        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6)
+        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6, consider_revcomp=consider_revcomp)
     else:  # hybrid or default
-        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config, consider_revcomp=consider_revcomp)
     
     similarities = []
     for seq in sequences:
@@ -445,7 +518,7 @@ def calculate_consensus_similarity(sequences, reference_seq, config=None,
         raise ValueError("Method must be 'average', 'median', or 'max'")
 
 def filter_sequences_by_alignment(sequences, reference_seq, config=None, 
-                                num_sequences=5, alignment_type='hybrid'):
+                                num_sequences=5, alignment_type='hybrid', consider_revcomp=False):
     """
     Filter sequences by selecting those with moderate alignment similarity to reference.
     
@@ -467,13 +540,13 @@ def filter_sequences_by_alignment(sequences, reference_seq, config=None,
     
     # Choose similarity function
     if alignment_type == 'global':
-        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'local':
-        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config, consider_revcomp)
     elif alignment_type == 'kmer':
-        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6)
+        similarity_func = lambda s1, s2: calculate_kmer_similarity(s1, s2, k=6, consider_revcomp=consider_revcomp)
     else:  # hybrid or default
-        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config)
+        similarity_func = lambda s1, s2: calculate_hybrid_similarity(s1, s2, config, consider_revcomp=consider_revcomp)
     
     # Calculate similarities
     seq_similarities = []
@@ -492,7 +565,7 @@ def filter_sequences_by_alignment(sequences, reference_seq, config=None,
     selected_sequences = [seq for seq, _ in seq_similarities[start_idx:end_idx]]
     return selected_sequences
 
-def benchmark_alignment_methods(seq1, seq2, config=None):
+def benchmark_alignment_methods(seq1, seq2, config=None, consider_revcomp=False):
     """
     Benchmark different alignment methods and return timing and scores.
     
@@ -509,14 +582,13 @@ def benchmark_alignment_methods(seq1, seq2, config=None):
     
     results = {}
     methods = [
-        ('kmer', lambda: calculate_kmer_similarity(seq1, seq2)),
-        ('sliding', lambda: calculate_sliding_window_similarity(seq1, seq2)),
-        ('lcs', lambda: calculate_lcs_similarity(seq1, seq2)),
-        ('edit', lambda: calculate_edit_distance_similarity(seq1, seq2)),
-        ('local_fast', lambda: calculate_local_alignment_similarity_fast(seq1, seq2, config)),
-        ('hybrid', lambda: calculate_hybrid_similarity(seq1, seq2, config)),
-        ('global', lambda: calculate_pairwise_alignment_similarity(seq1, seq2, config)),
-        ('local', lambda: calculate_local_alignment_similarity(seq1, seq2, config))
+        ('kmer', lambda: calculate_kmer_similarity(seq1, seq2, consider_revcomp=consider_revcomp)),
+        ('sliding', lambda: calculate_sliding_window_similarity(seq1, seq2, consider_revcomp=consider_revcomp)),
+        ('lcs', lambda: calculate_lcs_similarity(seq1, seq2, consider_revcomp=consider_revcomp)),
+        ('edit', lambda: calculate_edit_distance_similarity(seq1, seq2, consider_revcomp=consider_revcomp)),
+        ('hybrid', lambda: calculate_hybrid_similarity(seq1, seq2, config, consider_revcomp=consider_revcomp)),
+        ('global', lambda: calculate_pairwise_alignment_similarity(seq1, seq2, config, consider_revcomp=consider_revcomp)),
+        ('local', lambda: calculate_local_alignment_similarity(seq1, seq2, config, consider_revcomp=consider_revcomp))
     ]
     
     for method_name, method_func in methods:

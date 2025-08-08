@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Benchmark script for comparing different similarity methods.
-Helps users choose the optimal similarity method for their Z-DNA data.
+Helps users choose the optimal similarity method for their ZAT-DNA data.
 """
 
 import sys
@@ -14,12 +14,12 @@ from alignment_utils import (
     calculate_kmer_similarity,
     calculate_sliding_window_similarity,
     calculate_lcs_similarity,
-    calculate_local_alignment_similarity_fast,
+    calculate_edit_distance_similarity,
     calculate_pairwise_alignment_similarity,
     calculate_local_alignment_similarity
 )
 
-def benchmark_on_real_data(data_seq_file, index_seq_file, num_samples=10, iterations_per_test=100, num_repeats=3):
+def benchmark_on_real_data(data_seq_file, index_seq_file, num_samples=10, iterations_per_test=100, num_repeats=3, consider_revcomp=False):
     """
     Benchmark similarity methods on real data files.
     """
@@ -53,12 +53,12 @@ def benchmark_on_real_data(data_seq_file, index_seq_file, num_samples=10, iterat
     # Sample random pairs for benchmarking
     results = {}
     methods = [
-        ('kmer', lambda s1, s2: calculate_kmer_similarity(s1, s2, k=13)),
-        ('sliding', lambda s1, s2: calculate_sliding_window_similarity(s1, s2, window_size=50, step=10)),
-        ('lcs', lambda s1, s2: calculate_lcs_similarity(s1, s2)),
-        ('local_fast', lambda s1, s2: calculate_local_alignment_similarity_fast(s1, s2, config)),
-        ('global', lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config)),
-        ('local', lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config))
+        ('kmer', lambda s1, s2: calculate_kmer_similarity(s1, s2, k=13, consider_revcomp=consider_revcomp)),
+        ('sliding', lambda s1, s2: calculate_sliding_window_similarity(s1, s2, window_size=50, step=10, consider_revcomp=consider_revcomp)),
+        ('lcs', lambda s1, s2: calculate_lcs_similarity(s1, s2, consider_revcomp=consider_revcomp)),
+        ('edit_distance', lambda s1, s2: calculate_edit_distance_similarity(s1, s2, consider_revcomp=consider_revcomp)),
+        ('global', lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config, consider_revcomp=consider_revcomp)),
+        ('local', lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config, consider_revcomp=consider_revcomp))
     ]
     
     for method_name, method_func in methods:
@@ -169,7 +169,7 @@ def benchmark_on_real_data(data_seq_file, index_seq_file, num_samples=10, iterat
         print(f"• For speed/accuracy balance: {sorted_methods[1][0] if len(sorted_methods) > 1 else fastest}")
     
     # For accuracy (methods that use full sequence information)
-    accuracy_methods = ['global', 'local', 'local_fast']
+    accuracy_methods = ['global', 'local']
     best_accuracy = None
     for name in accuracy_methods:
         if name in results:
@@ -181,7 +181,7 @@ def benchmark_on_real_data(data_seq_file, index_seq_file, num_samples=10, iterat
     
     return results
 
-def quick_benchmark(num_tests_per_length=20, iterations_per_test=100, num_repeats=3):
+def quick_benchmark(num_tests_per_length=20, iterations_per_test=100, num_repeats=3, consider_revcomp=False):
     """
     Quick benchmark using synthetic sequences with detailed results for each sequence length.
     """
@@ -248,12 +248,12 @@ def quick_benchmark(num_tests_per_length=20, iterations_per_test=100, num_repeat
     
     # Test each method
     methods = [
-        ('kmer', lambda s1, s2: calculate_kmer_similarity(s1, s2, k=13)),
-        ('sliding', lambda s1, s2: calculate_sliding_window_similarity(s1, s2)),
-        ('lcs', lambda s1, s2: calculate_lcs_similarity(s1, s2)),
-        ('local_fast', lambda s1, s2: calculate_local_alignment_similarity_fast(s1, s2, config)),
-        ('global', lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config)),
-        ('local', lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config))
+        ('kmer', lambda s1, s2: calculate_kmer_similarity(s1, s2, k=13, consider_revcomp=consider_revcomp)),
+        ('sliding', lambda s1, s2: calculate_sliding_window_similarity(s1, s2, consider_revcomp=consider_revcomp)),
+        ('lcs', lambda s1, s2: calculate_lcs_similarity(s1, s2, consider_revcomp=consider_revcomp)),
+        ('edit_distance', lambda s1, s2: calculate_edit_distance_similarity(s1, s2, consider_revcomp=consider_revcomp)),
+        ('global', lambda s1, s2: calculate_pairwise_alignment_similarity(s1, s2, config, consider_revcomp=consider_revcomp)),
+        ('local', lambda s1, s2: calculate_local_alignment_similarity(s1, s2, config, consider_revcomp=consider_revcomp))
     ]
     
     # Store results by length and method
@@ -458,7 +458,7 @@ def quick_benchmark(num_tests_per_length=20, iterations_per_test=100, num_repeat
         print(f"• For speed/accuracy balance: {sorted_overall[1][0] if len(sorted_overall) > 1 else fastest}")
     
     # For accuracy (methods that use full sequence information)
-    accuracy_methods = ['global', 'local', 'local_fast']
+    accuracy_methods = ['global', 'local']
     best_accuracy = None
     for name in accuracy_methods:
         if name in overall_results:
@@ -481,36 +481,43 @@ def main():
     """
     Main function for running benchmarks.
     """
-    if len(sys.argv) < 2:
+    # Simple flag parsing for reverse complement consideration
+    args = [a for a in sys.argv[1:]]
+    consider_revcomp = False
+    if '--revcomp' in args:
+        consider_revcomp = True
+        args = [a for a in args if a != '--revcomp']
+
+    if len(args) < 1:
         print("Usage:")
-        print("  python benchmark_similarity.py quick [num_tests] [iterations] [repeats]     # Quick synthetic benchmark")
-        print("  python benchmark_similarity.py <data_seq> <index_seqs> [num_samples] [iterations] [repeats]  # Real data benchmark")
+        print("  python benchmark_similarity.py quick [num_tests] [iterations] [repeats] [--revcomp]    # Quick synthetic benchmark")
+        print("  python benchmark_similarity.py <data_seq> <index_seqs> [num_samples] [iterations] [repeats] [--revcomp]  # Real data benchmark")
         print()
         print("Examples:")
         print("  python benchmark_similarity.py quick                        # Quick benchmark with default settings")
-        print("  python benchmark_similarity.py quick 50                     # Quick benchmark with 50 tests per length")
-        print("  python benchmark_similarity.py quick 100 1 3               # Quick benchmark with 100 tests, 1 iterations, 3 repeats")
-        print("  python benchmark_similarity.py input_files/data-seq.fa input_files/64-bit-index-seqs.fa")
-        print("  python benchmark_similarity.py input_files/data-seq.fa input_files/64-bit-index-seqs.fa 100 1 3")
+        print("  python benchmark_similarity.py quick 50 --revcomp           # Quick benchmark considering reverse complements")
+        print("  python benchmark_similarity.py quick 100 1 3 --revcomp     # Quick benchmark with 100 tests, 1 iterations, 3 repeats, revcomp")
+        print("  python benchmark_similarity.py input_files/data-seq.fa input_files/64-bit-index-seqs.fa --revcomp")
+        print("  python benchmark_similarity.py input_files/data-seq.fa input_files/64-bit-index-seqs.fa 100 1 3 --revcomp")
         sys.exit(1)
     
-    if sys.argv[1] == 'quick':
-        num_tests = int(sys.argv[2]) if len(sys.argv) > 2 else 20
-        iterations = int(sys.argv[3]) if len(sys.argv) > 3 else 100
-        repeats = int(sys.argv[4]) if len(sys.argv) > 4 else 3
-        quick_benchmark(num_tests, iterations, repeats)
+    if args[0] == 'quick':
+        num_tests = int(args[1]) if len(args) > 1 else 20
+        iterations = int(args[2]) if len(args) > 2 else 100
+        repeats = int(args[3]) if len(args) > 3 else 3
+        quick_benchmark(num_tests, iterations, repeats, consider_revcomp=consider_revcomp)
     else:
-        if len(sys.argv) < 3:
+        if len(args) < 2:
             print("Error: Need both data sequence file and index sequence file")
             sys.exit(1)
         
-        data_seq_file = sys.argv[1]
-        index_seq_file = sys.argv[2]
-        num_samples = int(sys.argv[3]) if len(sys.argv) > 3 else 10
-        iterations = int(sys.argv[4]) if len(sys.argv) > 4 else 100
-        repeats = int(sys.argv[5]) if len(sys.argv) > 5 else 3
+        data_seq_file = args[0]
+        index_seq_file = args[1]
+        num_samples = int(args[2]) if len(args) > 2 else 10
+        iterations = int(args[3]) if len(args) > 3 else 100
+        repeats = int(args[4]) if len(args) > 4 else 3
         
-        benchmark_on_real_data(data_seq_file, index_seq_file, num_samples, iterations, repeats)
+        benchmark_on_real_data(data_seq_file, index_seq_file, num_samples, iterations, repeats, consider_revcomp=consider_revcomp)
 
 if __name__ == "__main__":
     main() 
