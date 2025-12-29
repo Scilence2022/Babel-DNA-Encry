@@ -42,7 +42,7 @@ z_threshold_set = False
 opts, args = getopt.getopt(
     sys.argv[1:],
     '-h-i:',
-    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'min_clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=', 'clu_threshold=']
+    ['help', 'input=', 'data_seq=', 'index_seqs=', 'bit_num=', 'clu_seq_num=', 'dec_rep_time=', 'dec_mode=', 'z_threshold=', 'clu_threshold=']
 )
 
 usage = 'Usage:\n' + r'      python decipher-ZAT-DNA.py -i input_file [Options]'
