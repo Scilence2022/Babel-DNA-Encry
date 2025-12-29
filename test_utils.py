@@ -954,11 +954,12 @@ def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=11, kmer_length = 13, bit_num 
         clu_seqs.append([])
         clu_seqs_num.append(0)
 
+    total_cov_num = 0
+    rand_seq_num = len(kms_arr)*1
 
-    rand_seq_num = len(kms_arr)*100
     # max_clu_seq_num = 20
     min_clu_seq_num = 0
-    # print("\nCollecting quanlified reads for each index, target number: " + str(max_clu_seq_num))
+    print("\nCollecting quanlified reads for each index, target number: " + str(max_clu_seq_num))
     while min_clu_seq_num < max_clu_seq_num:
         # print('---------------------------------------------------------------------')
         rand_seqs = seq_ft.rd_seq_num(rand_seq_num)
@@ -981,6 +982,10 @@ def collect_seqs(kms_arr, seq_ft, max_clu_seq_num=11, kmer_length = 13, bit_num 
         min_clu_seq_num = min_n #update the minimal sequence number of clusters
         # print("min_clu_seq_num: " + str(min_clu_seq_num))
         # print(min_clu_seq_num)
+
+        total_cov_num = total_cov_num + 1
+    print("Coverages required to sample enough reads for all indexes: ", end='')
+    print(total_cov_num)
     return clu_seqs
 
 
